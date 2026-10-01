@@ -3,10 +3,9 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="픽셀 건물주 RPG", page_icon="🕹️", layout="centered")
 
-st.title("🕹️ 픽셀 캐릭터 부동산 & 투자 RPG")
-st.caption("방향키(W, A, S, D 또는 화살표)나 화면의 조이스틱 버튼으로 캐릭터를 움직여 건물에 접근해 보세요!")
+st.title("🕹️ 픽셀 2D 타운 & 건물 입장 RPG")
+st.caption("방향키(W, A, S, D)나 화면의 조이스틱 버튼으로 캐릭터를 직접 움직여 보세요!")
 
-# HTML5 Canvas + JS 기반 픽셀 RPG 게임 커스텀 컴포넌트
 game_html = """
 <!DOCTYPE html>
 <html>
@@ -15,7 +14,7 @@ game_html = """
     body {
         margin: 0;
         padding: 0;
-        background-color: #1a1a2e;
+        background-color: #121212;
         color: white;
         font-family: 'Courier New', Courier, monospace;
         display: flex;
@@ -27,14 +26,14 @@ game_html = """
         margin-top: 10px;
     }
     canvas {
-        border: 4px solid #e94560;
+        border: 4px solid #f39c12;
         border-radius: 8px;
-        background-color: #16213e;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        background-color: #1e272e;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.6);
     }
     #uiBox {
         width: 480px;
-        background-color: #0f3460;
+        background-color: #2c3e50;
         padding: 12px;
         border-radius: 8px;
         margin-top: 10px;
@@ -48,7 +47,7 @@ game_html = """
         color: #f1c40f;
     }
     .action-btn {
-        background-color: #e94560;
+        background-color: #e67e22;
         color: white;
         border: none;
         padding: 8px 12px;
@@ -58,7 +57,26 @@ game_html = """
         font-weight: bold;
     }
     .action-btn:hover {
-        background-color: #ff6b6b;
+        background-color: #f39c12;
+    }
+    .enter-btn {
+        background-color: #27ae60;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    .exit-btn {
+        background-color: #c0392b;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
     }
     .controls {
         display: grid;
@@ -72,23 +90,24 @@ game_html = """
         height: 50px;
         font-size: 18px;
         font-weight: bold;
-        background: #16213e;
+        background: #34495e;
         color: white;
-        border: 2px solid #e94560;
+        border: 2px solid #f39c12;
         border-radius: 8px;
         cursor: pointer;
     }
     .ctrl-btn:active {
-        background: #e94560;
+        background: #f39c12;
     }
     #dialogue {
-        min-height: 40px;
-        background: #16213e;
-        padding: 8px;
+        min-height: 48px;
+        background: #1a252f;
+        padding: 10px;
         border-radius: 4px;
-        border: 1px solid #0f3460;
+        border: 1px solid #34495e;
         margin-top: 5px;
         font-size: 13px;
+        line-height: 1.4;
     }
 </style>
 </head>
@@ -100,14 +119,14 @@ game_html = """
 
 <div id="uiBox">
     <div class="status-bar">
-        <span>📅 턴: <span id="turnText">1</span> / 12</span>
+        <span>📍 위치: <span id="locationText">야외 마을</span></span>
+        <span>📅 턴: <span id="turnText">1</span>/12</span>
         <span>💰 현금: <span id="moneyText">1,000,000</span>원</span>
     </div>
-    <div id="dialogue">💬 건물에 가까이 가서 상호작용해 보세요! (은행/증권사/코인소/부동산)</div>
-    <div id="actionArea" style="margin-top: 10px; text-align: center;"></div>
+    <div id="dialogue">💬 방향키로 이동해서 건물 입구로 가보세요!</div>
+    <div id="actionArea" style="margin-top: 8px; text-align: center;"></div>
 </div>
 
-<!-- 모바일/클릭 조작용 조이스틱 버튼 -->
 <div class="controls">
     <div></div>
     <button class="ctrl-btn" onclick="moveChar(0, -15)">▲</button>
@@ -121,32 +140,41 @@ game_html = """
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// 게임 상태 변수
+// 게임 데이터
 let money = 1000000;
 let turn = 1;
+let currentScene = 'town'; // 'town' (야외) 또는 건물 ID ('bank', 'stock', 'crypto', 'realty')
 let ownedBuildings = [];
 
-// 캐릭터 상태
+// 플레이어
 const player = {
-    x: 220,
-    y: 160,
+    x: 225,
+    y: 170,
     size: 24,
     color: '#00fff5',
     speed: 12,
     name: '김개미'
 };
 
-// 건물 데이터 (맵 상의 위치)
+// 건물 데이터 (야외 마을 상의 좌표)
 const buildings = [
-    { id: 'bank', name: '🏦 안전 은행', x: 40, y: 30, w: 90, h: 70, color: '#2ecc71', type: 'bank' },
-    { id: 'stock', name: '📈 미래 증권', x: 350, y: 30, w: 90, h: 70, color: '#3498db', type: 'stock' },
-    { id: 'crypto', name: '🚀 코인 거래소', x: 40, y: 240, w: 90, h: 70, color: '#e74c3c', type: 'crypto' },
-    { id: 'realty', name: '🏢 강남 부동산', x: 350, y: 240, w: 90, h: 70, color: '#f1c40f', type: 'realty' }
+    { id: 'bank', name: '🏦 안전 은행', x: 40, y: 30, w: 100, h: 70, color: '#2ecc71', npcName: '은행원 김수호' },
+    { id: 'stock', name: '📈 미래 증권', x: 340, y: 30, w: 100, h: 70, color: '#3498db', npcName: '펀드매니저 박차트' },
+    { id: 'crypto', name: '🚀 코인 거래소', x: 40, y: 240, w: 100, h: 70, color: '#e74c3c', npcName: '코인 중개인 나대박' },
+    { id: 'realty', name: '🏢 강남 부동산', x: 340, y: 240, w: 100, h: 70, color: '#f1c40f', npcName: '부동산 중개사 최건물' }
 ];
 
-let nearBuilding = null;
+// 내부 NPC 데이터
+const interiorNPCs = {
+    bank: { x: 225, y: 60, size: 28, color: '#27ae60', name: '🏦 은행원 김수호' },
+    stock: { x: 225, y: 60, size: 28, color: '#2980b9', name: '📈 펀드매니저 박차트' },
+    crypto: { x: 225, y: 60, size: 28, color: '#c0392b', name: '🚀 중개인 나대박' },
+    realty: { x: 225, y: 60, size: 28, color: '#f39c12', name: '🏢 중개사 최건물' }
+};
 
-// 키보드 조작 이벤트
+let nearTarget = null; // 입구 또는 NPC 근접 여부
+
+// 키보드 조작
 document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') moveChar(0, -player.speed);
     if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') moveChar(0, player.speed);
@@ -157,63 +185,112 @@ document.addEventListener('keydown', (e) => {
 function moveChar(dx, dy) {
     if (turn > 12 || money <= 0) return;
     
-    player.x = Math.max(10, Math.min(canvas.width - player.size - 10, player.x + dx));
-    player.y = Math.max(10, Math.min(canvas.height - player.size - 10, player.y + dy));
+    player.x = Math.max(15, Math.min(canvas.width - player.size - 15, player.x + dx));
+    player.y = Math.max(15, Math.min(canvas.height - player.size - 15, player.y + dy));
     
     checkProximity();
-    drawMap();
+    draw();
 }
 
-// 건물 근접 체크
+// 근접 여부 체크 (야외 입구 or 건물 내부 NPC)
 function checkProximity() {
-    nearBuilding = null;
+    nearTarget = null;
     const actionArea = document.getElementById('actionArea');
     const dialogue = document.getElementById('dialogue');
     
-    for (let b of buildings) {
-        // 거리 계산
-        let cx = b.x + b.w / 2;
-        let cy = b.y + b.h / 2;
-        let px = player.x + player.size / 2;
-        let py = player.y + player.size / 2;
-        let dist = Math.hypot(cx - px, cy - py);
-        
-        if (dist < 75) {
-            nearBuilding = b;
-            break;
+    if (currentScene === 'town') {
+        // 마을 야외: 건물 입구 근접 체크
+        for (let b of buildings) {
+            let cx = b.x + b.w / 2;
+            let cy = b.y + b.h;
+            let dist = Math.hypot(cx - (player.x + player.size/2), cy - (player.y + player.size/2));
+            
+            if (dist < 45) {
+                nearTarget = b;
+                break;
+            }
         }
-    }
-    
-    if (nearBuilding) {
-        dialogue.innerHTML = `📍 <b>[${nearBuilding.name}]</b> 앞에 도착했습니다. 아래 메뉴를 선택하세요!`;
-        renderActionButtons(nearBuilding.type);
+        
+        if (nearTarget) {
+            dialogue.innerHTML = `📍 <b>[${nearTarget.name}]</b> 문 앞에 도착했습니다.`;
+            actionArea.innerHTML = `<button class="enter-btn" onclick="enterBuilding('${nearTarget.id}')">🚪 건물 입장하기</button>`;
+        } else {
+            dialogue.innerHTML = "💬 마을을 거닐며 원하는 건물 입구로 이동해보세요!";
+            actionArea.innerHTML = "";
+        }
     } else {
-        dialogue.innerHTML = "💬 방향키나 버튼으로 캐릭터를 움직여 건물에 다가가세요!";
-        actionArea.innerHTML = "";
+        // 건물 내부: 직원(NPC) 및 출구 체크
+        let npc = interiorNPCs[currentScene];
+        let dist = Math.hypot((npc.x + npc.size/2) - (player.x + player.size/2), (npc.y + npc.size/2) - (player.y + player.size/2));
+        
+        // 출구 근처 체크 (하단 출구)
+        if (player.y > canvas.height - 50) {
+            dialogue.innerHTML = "🚪 밖으로 나가는 출구입니다.";
+            actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
+        } else if (dist < 55) {
+            dialogue.innerHTML = `💬 <b>${npc.name}</b>: "어서오세요, 어떤 상담이나 거래를 도와드릴까요?"`;
+            renderDialogueOptions(currentScene);
+        } else {
+            dialogue.innerHTML = `🏢 [${buildings.find(b=>b.id===currentScene).name} 내부] 위쪽 창구에 있는 직원에게 다가가 보세요.`;
+            actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
+        }
     }
 }
 
-// 상호작용 버튼 생성
-function renderActionButtons(type) {
+// 건물 입장 및 퇴장
+function enterBuilding(buildingId) {
+    currentScene = buildingId;
+    player.x = 225;
+    player.y = 280; // 건물 하단 입구로 이동
+    
+    const bObj = buildings.find(b => b.id === buildingId);
+    document.getElementById('locationText').innerText = bObj.name;
+    checkProximity();
+    draw();
+}
+
+function exitBuilding() {
+    let bObj = buildings.find(b => b.id === currentScene);
+    currentScene = 'town';
+    // 해당 건물 문 앞 위치로 스폰
+    player.x = bObj.x + bObj.w/2 - player.size/2;
+    player.y = bObj.y + bObj.h + 10;
+    
+    document.getElementById('locationText').innerText = '야외 마을';
+    checkProximity();
+    draw();
+}
+
+// 직원과의 대화 옵션 (거래 실행)
+function renderDialogueOptions(type) {
     const actionArea = document.getElementById('actionArea');
-    actionArea.innerHTML = "";
     
     if (type === 'bank') {
-        actionArea.innerHTML = `<button class="action-btn" onclick="investBank()">🏦 적금 넣기 (확정 +5%)</button>`;
+        actionArea.innerHTML = `
+            <button class="action-btn" onclick="investBank()">🏦 예금 가입하기 (확정 이자 +5%)</button>
+            <button class="exit-btn" onclick="exitBuilding()">🚪 대화 끝내고 나가기</button>
+        `;
     } else if (type === 'stock') {
-        actionArea.innerHTML = `<button class="action-btn" onclick="investStock()">📈 주식 매수 (50% 확률로 +30% / -20%)</button>`;
+        actionArea.innerHTML = `
+            <button class="action-btn" onclick="investStock()">📈 주식 매수 (50% 확률 +30% / -20%)</button>
+            <button class="exit-btn" onclick="exitBuilding()">🚪 대화 끝내고 나가기</button>
+        `;
     } else if (type === 'crypto') {
-        actionArea.innerHTML = `<button class="action-btn" onclick="investCrypto()">🚀 코인 올인 (20% 확률로 +150% / -40%)</button>`;
+        actionArea.innerHTML = `
+            <button class="action-btn" onclick="investCrypto()">🚀 코인 올인 (20% 확률 +150% / -40%)</button>
+            <button class="exit-btn" onclick="exitBuilding()">🚪 대화 끝내고 나가기</button>
+        `;
     } else if (type === 'realty') {
         actionArea.innerHTML = `
-            <button class="action-btn" onclick="buyBuilding('반지하 고시원', 10000000, 500000)">🏚️ 고시원 매수 (1,000만)</button>
-            <button class="action-btn" onclick="buyBuilding('원룸 빌라', 30000000, 1500000)">🏠 빌라 매수 (3,000만)</button>
-            <button class="action-btn" onclick="buyBuilding('강남 타워', 100000000, 10000000)">🏙️ 강남타워 매수 (1억 - 승리)</button>
+            <button class="action-btn" onclick="buyBuilding('반지하 고시원', 10000000, 500000)">🏚️ 고시원 (1천만)</button>
+            <button class="action-btn" onclick="buyBuilding('원룸 빌라', 30000000, 1500000)">🏠 빌라 (3천만)</button>
+            <button class="action-btn" onclick="buyBuilding('강남 타워', 100000000, 10000000)">🏙️ 강남타워 (1억 - 승리)</button>
+            <button class="exit-btn" onclick="exitBuilding()">🚪 대화 끝내고 나가기</button>
         `;
     }
 }
 
-// 턴 및 월세 처리
+// 턴 진행 및 월세 입금
 function processTurn() {
     let rentSum = 0;
     ownedBuildings.forEach(b => rentSum += b.rent);
@@ -230,11 +307,11 @@ function processTurn() {
     }
 }
 
-// 투자 처리 함수들
+// 거래 함수들
 function investBank() {
     let profit = Math.floor(money * 0.05);
     money += profit;
-    alert(`🏦 적금 이자로 +${profit.toLocaleString()}원을 획득했습니다!`);
+    alert(`🏦 [김수호 직원]: "감사합니다! 적금 이자로 +${profit.toLocaleString()}원이 입금되었습니다."`);
     processTurn();
 }
 
@@ -242,11 +319,11 @@ function investStock() {
     if (Math.random() < 0.5) {
         let profit = Math.floor(money * 0.3);
         money += profit;
-        alert(`📈 주식 떡상! +${profit.toLocaleString()}원 이득!`);
+        alert(`📈 [박차트 매니저]: "축하합니다! 주식이 대폭등해서 +${profit.toLocaleString()}원 수익이 났습니다!"`);
     } else {
         let loss = Math.floor(money * 0.2);
         money -= loss;
-        alert(`📉 주식 떡락... -${loss.toLocaleString()}원 손실!`);
+        alert(`📉 [박차트 매니저]: "아쉬워요... 주가가 하락해서 -${loss.toLocaleString()}원 손실이 생겼습니다."`);
     }
     processTurn();
 }
@@ -255,23 +332,23 @@ function investCrypto() {
     if (Math.random() < 0.2) {
         let profit = Math.floor(money * 1.5);
         money += profit;
-        alert(`🚨 코인 대폭등! +${profit.toLocaleString()}원 초대박!`);
+        alert(`🚨 [나대박 중개인]: "대박 사건!! 코인 떡상으로 +${profit.toLocaleString()}원 초대박!"`);
     } else {
         let loss = Math.floor(money * 0.4);
         money -= loss;
-        alert(`📉 코인 폭락... -${loss.toLocaleString()}원 손실...`);
+        alert(`📉 [나대박 중개인]: "이런... 떡락장에 물려서 -${loss.toLocaleString()}원 손실이 났네요..."`);
     }
     processTurn();
 }
 
 function buyBuilding(name, price, rent) {
     if (money < price) {
-        alert("잔액이 부족합니다!");
+        alert("[최건물 중개사]: 잔액이 부족해서 이 매물은 사실 수 없습니다!");
         return;
     }
     money -= price;
     ownedBuildings.push({ name, rent });
-    alert(`🎉 [${name}] 매수 성공! 매 턴 월세 +${rent.toLocaleString()}원이 들어옵니다.`);
+    alert(`🎉 [최건물 중개사]: "${name} 계약 성공! 이제 턴마다 월세 +${rent.toLocaleString()}원이 자동으로 들어옵니다."`);
     updateUI();
 }
 
@@ -280,64 +357,110 @@ function updateUI() {
     document.getElementById('turnText').innerText = turn;
 }
 
-// 2D 맵 및 캐릭터 그리기
-function drawMap() {
+// 캔버스 그리기 함수 (타운 vs 건물 내부)
+function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // 격자 바닥 타일 표현
-    ctx.strokeStyle = '#1a2639';
-    for (let x = 0; x < canvas.width; x += 30) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-    }
-    for (let y = 0; y < canvas.height; y += 30) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    if (currentScene === 'town') {
+        drawTown();
+    } else {
+        drawInterior();
     }
     
-    // 건물 그리기
+    // 플레이어 캐릭터 그리기
+    drawPixelChar(player.x, player.y, player.color, player.name);
+}
+
+// 마을 야외 맵 렌더링
+function drawTown() {
+    // 잔디/길 타일
+    ctx.fillStyle = '#1e272e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // 중앙 도로 표현
+    ctx.fillStyle = '#34495e';
+    ctx.fillRect(190, 0, 100, canvas.height);
+    ctx.fillRect(0, 140, canvas.width, 80);
+    
+    // 건물들
     buildings.forEach(b => {
         ctx.fillStyle = b.color;
         ctx.fillRect(b.x, b.y, b.w, b.h);
         
-        // 건물 지붕 스타일
-        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        // 지붕 및 문
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
         ctx.fillRect(b.x, b.y, b.w, 15);
+        ctx.fillStyle = '#2c3e50';
+        ctx.fillRect(b.x + b.w/2 - 10, b.y + b.h - 20, 20, 20); // 문
         
-        // 건물 테두리
+        // 외곽선
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
         ctx.strokeRect(b.x, b.y, b.w, b.h);
         
-        // 건물 이름 텍스트
+        // 건물 이름
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 11px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(b.name, b.x + b.w/2, b.y + b.h/2 + 4);
+        ctx.fillText(b.name, b.x + b.w/2, b.y + 35);
     });
+}
+
+// 건물 내부 맵 렌더링
+function drawInterior() {
+    let npc = interiorNPCs[currentScene];
+    let bObj = buildings.find(b => b.id === currentScene);
     
-    // 픽셀 스타일 캐릭터 그리기
-    ctx.fillStyle = player.color;
-    // 캐릭터 몸통
-    ctx.fillRect(player.x, player.y, player.size, player.size);
+    // 바닥 타일
+    ctx.fillStyle = '#34495e';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // 캐릭터 눈/얼굴 픽셀 표현
+    // 내부 벽면
+    ctx.fillStyle = bObj.color;
+    ctx.fillRect(0, 0, canvas.width, 40);
+    
+    // 카운터(안내 창구 책상)
+    ctx.fillStyle = '#7f8c8d';
+    ctx.fillRect(140, 95, 200, 25);
+    ctx.strokeStyle = '#ecf0f1';
+    ctx.strokeRect(140, 95, 200, 25);
+    
+    // 하단 출구 표시
+    ctx.fillStyle = '#e74c3c';
+    ctx.fillRect(200, canvas.height - 15, 80, 15);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText("EXIT 출구", 240, canvas.height - 4);
+    
+    // NPC 직원 캐릭터 그리기
+    drawPixelChar(npc.x, npc.y, npc.color, npc.name);
+}
+
+// 픽셀 스타일 캐릭터 그리기 공통 함수
+function drawPixelChar(x, y, color, name) {
+    // 몸통
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, 24, 24);
+    
+    // 눈/얼굴 픽셀
     ctx.fillStyle = '#000000';
-    ctx.fillRect(player.x + 4, player.y + 6, 4, 4);
-    ctx.fillRect(player.x + 16, player.y + 6, 4, 4);
+    ctx.fillRect(x + 4, y + 6, 4, 4);
+    ctx.fillRect(x + 16, y + 6, 4, 4);
     
-    // 캐릭터 이름표 (상단 유저 이름)
+    // 캐릭터 이름표
     ctx.fillStyle = '#f1c40f';
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(player.name, player.x + player.size/2, player.y - 6);
+    ctx.fillText(name, x + 12, y - 6);
 }
 
-// 최초 실행
-drawMap();
+// 초기화 실행
+draw();
 checkProximity();
 </script>
 </body>
 </html>
 """
 
-# 스트림릿 화면에 HTML5 캔버스 내장
-components.html(game_html, height=650)
+components.html(game_html, height=660)
