@@ -1,198 +1,343 @@
-import random
 import streamlit as st
+import streamlit.components.v1 as components
 
-# 페이지 기본 설정
-st.set_page_config(page_title="김개미의 건물주 도전기", page_icon="🏢", layout="centered")
+st.set_page_config(page_title="픽셀 건물주 RPG", page_icon="🕹️", layout="centered")
 
-# 건물의 목록 및 가격/임대수익 정의
-BUILDINGS = [
-    {"name": "🏚️ 반지하 고시원", "price": 10000000, "rent": 500000},
-    {"name": "🏠 원룸 빌라", "price": 30000000, "rent": 1500000},
-    {"name": "🏪 편의점 입점 상가", "price": 50000000, "rent": 3000000},
-    {"name": "🏬 홍대 꼬마빌딩", "price": 80000000, "rent": 5500000},
-    {"name": "🏙️ 강남 랜드마크 타워", "price": 100000000, "rent": 10000000},
-]
+st.title("🕹️ 픽셀 캐릭터 부동산 & 투자 RPG")
+st.caption("방향키(W, A, S, D 또는 화살표)나 화면의 조이스틱 버튼으로 캐릭터를 움직여 건물에 접근해 보세요!")
 
-# 세션 상태 초기화
-if "money" not in st.session_state:
-    st.session_state.money = 1000000  # 초기 자금 100만 원
-if "turn" not in st.session_state:
-    st.session_state.turn = 1
-if "history" not in st.session_state:
-    st.session_state.history = []
-if "status" not in st.session_state:
-    st.session_state.status = "normal"
-if "dialogue" not in st.session_state:
-    st.session_state.dialogue = "안녕! 난 흙수저 김개미야. 12턴 안에 1억을 모아서 진짜 건물주가 되는 게 꿈이지!"
-if "owned_buildings" not in st.session_state:
-    st.session_state.owned_buildings = []  # 소유한 건물 리스트
+# HTML5 Canvas + JS 기반 픽셀 RPG 게임 커스텀 컴포넌트
+game_html = """
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #1a1a2e;
+        color: white;
+        font-family: 'Courier New', Courier, monospace;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #gameContainer {
+        position: relative;
+        margin-top: 10px;
+    }
+    canvas {
+        border: 4px solid #e94560;
+        border-radius: 8px;
+        background-color: #16213e;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+    }
+    #uiBox {
+        width: 480px;
+        background-color: #0f3460;
+        padding: 12px;
+        border-radius: 8px;
+        margin-top: 10px;
+        box-sizing: border-box;
+    }
+    .status-bar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #f1c40f;
+    }
+    .action-btn {
+        background-color: #e94560;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        margin: 4px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .action-btn:hover {
+        background-color: #ff6b6b;
+    }
+    .controls {
+        display: grid;
+        grid-template-columns: repeat(3, 50px);
+        gap: 5px;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    .ctrl-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 18px;
+        font-weight: bold;
+        background: #16213e;
+        color: white;
+        border: 2px solid #e94560;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .ctrl-btn:active {
+        background: #e94560;
+    }
+    #dialogue {
+        min-height: 40px;
+        background: #16213e;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #0f3460;
+        margin-top: 5px;
+        font-size: 13px;
+    }
+</style>
+</head>
+<body>
 
-# 캐릭터 이미지 URL
-CHAR_IMAGES = {
-    "normal": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80",
-    "happy": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop&q=80",
-    "sad": "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop&q=80",
-    "panic": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80",
-    "win": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80"
+<div id="gameContainer">
+    <canvas id="gameCanvas" width="480" height="360"></canvas>
+</div>
+
+<div id="uiBox">
+    <div class="status-bar">
+        <span>📅 턴: <span id="turnText">1</span> / 12</span>
+        <span>💰 현금: <span id="moneyText">1,000,000</span>원</span>
+    </div>
+    <div id="dialogue">💬 건물에 가까이 가서 상호작용해 보세요! (은행/증권사/코인소/부동산)</div>
+    <div id="actionArea" style="margin-top: 10px; text-align: center;"></div>
+</div>
+
+<!-- 모바일/클릭 조작용 조이스틱 버튼 -->
+<div class="controls">
+    <div></div>
+    <button class="ctrl-btn" onclick="moveChar(0, -15)">▲</button>
+    <div></div>
+    <button class="ctrl-btn" onclick="moveChar(-15, 0)">◄</button>
+    <button class="ctrl-btn" onclick="moveChar(0, 15)">▼</button>
+    <button class="ctrl-btn" onclick="moveChar(15, 0)">►</button>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// 게임 상태 변수
+let money = 1000000;
+let turn = 1;
+let ownedBuildings = [];
+
+// 캐릭터 상태
+const player = {
+    x: 220,
+    y: 160,
+    size: 24,
+    color: '#00fff5',
+    speed: 12,
+    name: '김개미'
+};
+
+// 건물 데이터 (맵 상의 위치)
+const buildings = [
+    { id: 'bank', name: '🏦 안전 은행', x: 40, y: 30, w: 90, h: 70, color: '#2ecc71', type: 'bank' },
+    { id: 'stock', name: '📈 미래 증권', x: 350, y: 30, w: 90, h: 70, color: '#3498db', type: 'stock' },
+    { id: 'crypto', name: '🚀 코인 거래소', x: 40, y: 240, w: 90, h: 70, color: '#e74c3c', type: 'crypto' },
+    { id: 'realty', name: '🏢 강남 부동산', x: 350, y: 240, w: 90, h: 70, color: '#f1c40f', type: 'realty' }
+];
+
+let nearBuilding = null;
+
+// 키보드 조작 이벤트
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') moveChar(0, -player.speed);
+    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') moveChar(0, player.speed);
+    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') moveChar(-player.speed, 0);
+    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') moveChar(player.speed, 0);
+});
+
+function moveChar(dx, dy) {
+    if (turn > 12 || money <= 0) return;
+    
+    player.x = Math.max(10, Math.min(canvas.width - player.size - 10, player.x + dx));
+    player.y = Math.max(10, Math.min(canvas.height - player.size - 10, player.y + dy));
+    
+    checkProximity();
+    drawMap();
 }
 
-def reset_game():
-    st.session_state.money = 1000000
-    st.session_state.turn = 1
-    st.session_state.status = "normal"
-    st.session_state.dialogue = "좋아, 다시 처음부터 도전이다! 이번엔 강남 타워까지 삼킨다!"
-    st.session_state.history = []
-    st.session_state.owned_buildings = []
-
-# 타이틀 및 진행도
-st.title("🏢 김개미의 건물주 도전기 TRPG")
-st.progress(min(st.session_state.turn / 12, 1.0), text=f"남은 기회: {13 - st.session_state.turn}턴 / 12턴")
-
-st.divider()
-
-# --- 캐릭터 & 상태 대화창 ---
-col_img, col_talk = st.columns([1, 2])
-
-with col_img:
-    img_url = CHAR_IMAGES.get(st.session_state.status, CHAR_IMAGES["normal"])
-    st.image(img_url, caption="주인공 : 김개미", use_container_width=True)
-
-with col_talk:
-    st.subheader("💬 김개미의 한마디")
-    st.info(f'"{st.session_state.dialogue}"')
+// 건물 근접 체크
+function checkProximity() {
+    nearBuilding = null;
+    const actionArea = document.getElementById('actionArea');
+    const dialogue = document.getElementById('dialogue');
     
-    # 총 임대 수입 계산
-    total_rent = sum([b["rent"] for b in st.session_state.owned_buildings])
+    for (let b of buildings) {
+        // 거리 계산
+        let cx = b.x + b.w / 2;
+        let cy = b.y + b.h / 2;
+        let px = player.x + player.size / 2;
+        let py = player.y + player.size / 2;
+        let dist = Math.hypot(cx - px, cy - py);
+        
+        if (dist < 75) {
+            nearBuilding = b;
+            break;
+        }
+    }
     
-    m1, m2 = st.columns(2)
-    m1.metric("📅 현재 턴", f"{st.session_state.turn} / 12 턴")
-    m2.metric("💰 보유 현금", f"{st.session_state.money:,} 원")
-    if total_rent > 0:
-        st.caption(f"💵 턴마다 들어오는 월세 수입: **+{total_rent:,} 원**")
+    if (nearBuilding) {
+        dialogue.innerHTML = `📍 <b>[${nearBuilding.name}]</b> 앞에 도착했습니다. 아래 메뉴를 선택하세요!`;
+        renderActionButtons(nearBuilding.type);
+    } else {
+        dialogue.innerHTML = "💬 방향키나 버튼으로 캐릭터를 움직여 건물에 다가가세요!";
+        actionArea.innerHTML = "";
+    }
+}
 
-st.divider()
+// 상호작용 버튼 생성
+function renderActionButtons(type) {
+    const actionArea = document.getElementById('actionArea');
+    actionArea.innerHTML = "";
+    
+    if (type === 'bank') {
+        actionArea.innerHTML = `<button class="action-btn" onclick="investBank()">🏦 적금 넣기 (확정 +5%)</button>`;
+    } else if (type === 'stock') {
+        actionArea.innerHTML = `<button class="action-btn" onclick="investStock()">📈 주식 매수 (50% 확률로 +30% / -20%)</button>`;
+    } else if (type === 'crypto') {
+        actionArea.innerHTML = `<button class="action-btn" onclick="investCrypto()">🚀 코인 올인 (20% 확률로 +150% / -40%)</button>`;
+    } else if (type === 'realty') {
+        actionArea.innerHTML = `
+            <button class="action-btn" onclick="buyBuilding('반지하 고시원', 10000000, 500000)">🏚️ 고시원 매수 (1,000만)</button>
+            <button class="action-btn" onclick="buyBuilding('원룸 빌라', 30000000, 1500000)">🏠 빌라 매수 (3,000만)</button>
+            <button class="action-btn" onclick="buyBuilding('강남 타워', 100000000, 10000000)">🏙️ 강남타워 매수 (1억 - 승리)</button>
+        `;
+    }
+}
 
-# --- 엔딩 조건 판정 ---
-if st.session_state.money <= 0 and len(st.session_state.owned_buildings) == 0:
-    st.error("💥 [GAME OVER] 자산을 모두 잃고 파산했습니다...")
-    st.session_state.status = "panic"
-    if st.button("🔄 다시 도전하기"):
-        reset_game()
-        st.rerun()
+// 턴 및 월세 처리
+function processTurn() {
+    let rentSum = 0;
+    ownedBuildings.forEach(b => rentSum += b.rent);
+    money += rentSum;
+    turn += 1;
+    updateUI();
+    
+    if (money >= 100000000) {
+        alert("🎉 축하합니다! 1억 원을 모아 건물주가 되었습니다!");
+    } else if (turn > 12) {
+        alert("⏱️ 12턴이 지났습니다! 최종 보유 자산: " + money.toLocaleString() + "원");
+    } else if (money <= 0) {
+        alert("💥 파산했습니다! 게임 오버!");
+    }
+}
 
-elif st.session_state.money >= 100000000 or any(b["name"] == "🏙️ 강남 랜드마크 타워" for b in st.session_state.owned_buildings):
-    st.balloons()
-    st.success("🎉 [CLEAR] 강남 건물주 달성 성공! 김개미는 드디어 전설이 되었습니다!")
-    st.session_state.status = "win"
-    if st.button("🏆 다시 시작하기"):
-        reset_game()
-        st.rerun()
+// 투자 처리 함수들
+function investBank() {
+    let profit = Math.floor(money * 0.05);
+    money += profit;
+    alert(`🏦 적금 이자로 +${profit.toLocaleString()}원을 획득했습니다!`);
+    processTurn();
+}
 
-elif st.session_state.turn > 12:
-    st.error("⏱️ [TIME OVER] 12턴이 지났습니다!")
-    if st.button("🔄 다시 도전하기"):
-        reset_game()
-        st.rerun()
+function investStock() {
+    if (Math.random() < 0.5) {
+        let profit = Math.floor(money * 0.3);
+        money += profit;
+        alert(`📈 주식 떡상! +${profit.toLocaleString()}원 이득!`);
+    } else {
+        let loss = Math.floor(money * 0.2);
+        money -= loss;
+        alert(`📉 주식 떡락... -${loss.toLocaleString()}원 손실!`);
+    }
+    processTurn();
+}
 
-else:
-    # 탭 메뉴 (투자하기 vs 부동산 매수)
-    tab1, tab2 = st.tabs(["🎯 투자의 시간", "🏘️ 부동산 매수"])
+function investCrypto() {
+    if (Math.random() < 0.2) {
+        let profit = Math.floor(money * 1.5);
+        money += profit;
+        alert(`🚨 코인 대폭등! +${profit.toLocaleString()}원 초대박!`);
+    } else {
+        let loss = Math.floor(money * 0.4);
+        money -= loss;
+        alert(`📉 코인 폭락... -${loss.toLocaleString()}원 손실...`);
+    }
+    processTurn();
+}
 
-    # --- TAB 1: 금융 투자 ---
-    with tab1:
-        st.write("이번 턴에 어디에 투자하시겠습니까? (선택 시 턴이 진행되며, 보유 건물의 월세도 입금됩니다)")
-        c1, c2, c3 = st.columns(3)
+function buyBuilding(name, price, rent) {
+    if (money < price) {
+        alert("잔액이 부족합니다!");
+        return;
+    }
+    money -= price;
+    ownedBuildings.push({ name, rent });
+    alert(`🎉 [${name}] 매수 성공! 매 턴 월세 +${rent.toLocaleString()}원이 들어옵니다.`);
+    updateUI();
+}
+
+function updateUI() {
+    document.getElementById('moneyText').innerText = money.toLocaleString();
+    document.getElementById('turnText').innerText = turn;
+}
+
+// 2D 맵 및 캐릭터 그리기
+function drawMap() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 격자 바닥 타일 표현
+    ctx.strokeStyle = '#1a2639';
+    for (let x = 0; x < canvas.width; x += 30) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 30) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+    
+    // 건물 그리기
+    buildings.forEach(b => {
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, b.y, b.w, b.h);
         
-        # 월세 입금 로직 공통 함수
-        def process_turn_and_rent():
-            total_rent = sum([b["rent"] for b in st.session_state.owned_buildings])
-            st.session_state.money += total_rent
-            st.session_state.turn += 1
-            return total_rent
-
-        with c1:
-            st.markdown("### 🏦 안전 적금")
-            st.caption("확정 이자 +5%")
-            if st.button("적금 가입"):
-                rent = process_turn_and_rent()
-                profit = int(st.session_state.money * 0.05)
-                st.session_state.money += profit
-                st.session_state.status = "happy"
-                st.session_state.dialogue = f"안전하게 이자 {profit:,}원 모았어! (월세 +{rent:,}원 보너스)"
-                st.session_state.history.append(f"{st.session_state.turn-1}턴: 적금 +{profit:,}원 (월세 +{rent:,}원)")
-                st.rerun()
-
-        with c2:
-            st.markdown("### 📈 주식 투자")
-            st.caption("50% 확률로 +30% OR -20%")
-            if st.button("주식 매수"):
-                rent = process_turn_and_rent()
-                if random.random() < 0.5:
-                    profit = int(st.session_state.money * 0.3)
-                    st.session_state.money += profit
-                    st.session_state.status = "happy"
-                    st.session_state.dialogue = f"주식 떡상!! +{profit:,}원 이득 봤다! (월세 +{rent:,}원)"
-                    st.session_state.history.append(f"{st.session_state.turn-1}턴: 주식 성공 +{profit:,}원")
-                else:
-                    loss = int(st.session_state.money * 0.2)
-                    st.session_state.money -= loss
-                    st.session_state.status = "sad"
-                    st.session_state.dialogue = f"주식 떡락... -{loss:,}원 손실이다... 흑흑"
-                    st.session_state.history.append(f"{st.session_state.turn-1}턴: 주식 실패 -{loss:,}원")
-                st.rerun()
-
-        with c3:
-            st.markdown("### 🚀 코인 올인")
-            st.caption("20% 확률로 +150% OR 80% 확률로 -40%")
-            if st.button("코인 올인"):
-                rent = process_turn_and_rent()
-                if random.random() < 0.2:
-                    profit = int(st.session_state.money * 1.5)
-                    st.session_state.money += profit
-                    st.session_state.status = "happy"
-                    st.session_state.dialogue = f"🚨 화성 가즈아!! 코인 폭등으로 +{profit:,}원 획득!"
-                    st.session_state.history.append(f"{st.session_state.turn-1}턴: 코인 초대박 +{profit:,}원")
-                else:
-                    loss = int(st.session_state.money * 0.4)
-                    st.session_state.money -= loss
-                    st.session_state.status = "panic"
-                    st.session_state.dialogue = f"망했다... 코인 -{loss:,}원 떡락..."
-                    st.session_state.history.append(f"{st.session_state.turn-1}턴: 코인 떡락 -{loss:,}원")
-                st.rerun()
-
-    # --- TAB 2: 부동산 매수 상점 ---
-    with tab2:
-        st.subheader("🛒 매매 가능한 매물 리스트")
-        st.caption("건물을 매수하면 **매 턴마다 월세 수익**이 자동으로 들어옵니다!")
+        // 건물 지붕 스타일
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.fillRect(b.x, b.y, b.w, 15);
         
-        for b in BUILDINGS:
-            col_b1, col_b2, col_b3 = st.columns([2, 2, 1])
-            with col_b1:
-                st.write(f"**{b['name']}**")
-            with col_b2:
-                st.write(f"매매가: **{b['price']:,}원** (월세: +{b['rent']:,}원)")
-            with col_b3:
-                # 현금이 부족하면 버튼 비활성화
-                if st.session_state.money < b['price']:
-                    st.button("잔액 부족", key=b['name'], disabled=True)
-                else:
-                    if st.button("매수하기", key=b['name']):
-                        st.session_state.money -= b['price']
-                        st.session_state.owned_buildings.append(b)
-                        st.session_state.status = "happy"
-                        st.session_state.dialogue = f"축하해! {b['name']} 매수 완료! 이제 턴마다 월세가 들어와!"
-                        st.session_state.history.append(f"{st.session_state.turn}턴: {b['name']} 매수 성공")
-                        st.rerun()
+        // 건물 테두리
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        
+        // 건물 이름 텍스트
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(b.name, b.x + b.w/2, b.y + b.h/2 + 4);
+    });
+    
+    // 픽셀 스타일 캐릭터 그리기
+    ctx.fillStyle = player.color;
+    // 캐릭터 몸통
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+    
+    // 캐릭터 눈/얼굴 픽셀 표현
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(player.x + 4, player.y + 6, 4, 4);
+    ctx.fillRect(player.x + 16, player.y + 6, 4, 4);
+    
+    // 캐릭터 이름표 (상단 유저 이름)
+    ctx.fillStyle = '#f1c40f';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(player.name, player.x + player.size/2, player.y - 6);
+}
 
-st.divider()
+// 최초 실행
+drawMap();
+checkProximity();
+</script>
+</body>
+</html>
+"""
 
-# 소유 건물 현황 표시
-if st.session_state.owned_buildings:
-    st.subheader("🏢 김개미가 소유한 부동산")
-    for ob in st.session_state.owned_buildings:
-        st.success(f"• **{ob['name']}** (매 턴 월세 +{ob['rent']:,}원)")
-
-# 지난 기록
-with st.expander("📜 지난 투자 및 매수 기록 보기"):
-    for log in reversed(st.session_state.history):
-        st.write(log)
+# 스트림릿 화면에 HTML5 캔버스 내장
+components.html(game_html, height=650)
