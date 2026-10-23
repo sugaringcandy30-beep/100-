@@ -1,10 +1,10 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-st.set_page_config(page_title="픽셀 비치 RPG", page_icon="🏖️", layout="centered")
+st.set_page_config(page_title="메이플 비치 자산관리 RPG", page_icon="🍁", layout="centered")
 
-st.title("🏖️ 픽셀 비치 타운 & 건물 입장 RPG")
-st.caption("방향키(W, A, S, D)나 조이스틱으로 해변의 튜브 탄 캐릭터를 직접 조종해 보세요!")
+st.title("🍁 메이플 픽셀 비치 & 건물 입장 RPG")
+st.caption("좌우 방향키(A, D)로 이동, Space키로 점프! 파란색 차원 포탈 앞에서 [위쪽 방향키(▲) / W]를 눌러 입장하세요.")
 
 game_html = """
 <!DOCTYPE html>
@@ -14,9 +14,9 @@ game_html = """
     body {
         margin: 0;
         padding: 0;
-        background-color: #0c2461;
+        background-color: #0d1117;
         color: white;
-        font-family: 'Courier New', Courier, monospace;
+        font-family: 'Comic Sans MS', 'Courier New', sans-serif;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -26,88 +26,94 @@ game_html = """
         margin-top: 10px;
     }
     canvas {
-        border: 4px solid #f39c12;
-        border-radius: 8px;
-        background-color: #1e272e;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.8);
-        image-rendering: pixelated; /* 도트 픽셀을 선명하게 처리 */
+        border: 4px solid #ffbe76;
+        border-radius: 12px;
+        background-color: #130f40;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+        image-rendering: pixelated;
     }
     #uiBox {
-        width: 480px;
-        background-color: #1e3799;
-        padding: 12px;
-        border-radius: 8px;
+        width: 540px;
+        background: linear-gradient(135deg, #222f3e, #10ac84);
+        padding: 14px;
+        border-radius: 10px;
         margin-top: 10px;
         box-sizing: border-box;
-        border: 2px solid #4a69bd;
+        border: 2px solid #54a0ff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     .status-bar {
         display: flex;
         justify-content: space-between;
         margin-bottom: 8px;
         font-weight: bold;
-        color: #f8c291;
+        color: #feca57;
+        font-size: 14px;
     }
     .action-btn {
-        background-color: #e55039;
+        background: linear-gradient(180deg, #ff9f43, #ee5253);
         color: white;
-        border: none;
-        padding: 8px 12px;
+        border: 2px solid #ffffff;
+        padding: 8px 14px;
         margin: 4px;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
         font-weight: bold;
+        box-shadow: 0 3px 0 #b17b10;
     }
     .action-btn:hover {
-        background-color: #eb2f06;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 0 #b17b10;
     }
     .enter-btn {
-        background-color: #2ed573;
+        background: linear-gradient(180deg, #10ac84, #1dd1a1);
         color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
+        border: 2px solid #ffffff;
+        padding: 8px 18px;
+        border-radius: 6px;
         cursor: pointer;
         font-weight: bold;
         font-size: 14px;
+        box-shadow: 0 3px 0 #10ac84;
     }
     .exit-btn {
-        background-color: #b71540;
+        background: linear-gradient(180deg, #ff6b6b, #ee5253);
         color: white;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 4px;
+        border: 2px solid #ffffff;
+        padding: 6px 14px;
+        border-radius: 6px;
         cursor: pointer;
         font-weight: bold;
     }
     .controls {
         display: grid;
-        grid-template-columns: repeat(3, 50px);
-        gap: 5px;
+        grid-template-columns: repeat(4, 60px);
+        gap: 8px;
         justify-content: center;
-        margin-top: 10px;
+        margin-top: 12px;
     }
     .ctrl-btn {
-        width: 50px;
+        width: 60px;
         height: 50px;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: bold;
-        background: #0c2461;
-        color: #f8c291;
-        border: 2px solid #e55039;
+        background: #222f3e;
+        color: #feca57;
+        border: 2px solid #54a0ff;
         border-radius: 8px;
         cursor: pointer;
+        box-shadow: 0 3px 0 #10ac84;
     }
     .ctrl-btn:active {
-        background: #e55039;
-        color: white;
+        transform: translateY(2px);
+        box-shadow: none;
     }
     #dialogue {
         min-height: 48px;
-        background: #0c2461;
+        background: rgba(15, 23, 42, 0.9);
         padding: 10px;
-        border-radius: 4px;
-        border: 1px solid #4a69bd;
+        border-radius: 6px;
+        border: 2px solid #54a0ff;
         margin-top: 5px;
         font-size: 13px;
         line-height: 1.4;
@@ -117,26 +123,24 @@ game_html = """
 <body>
 
 <div id="gameContainer">
-    <canvas id="gameCanvas" width="480" height="360"></canvas>
+    <canvas id="gameCanvas" width="540" height="340"></canvas>
 </div>
 
 <div id="uiBox">
     <div class="status-bar">
-        <span>📍 위치: <span id="locationText">해변 리조트</span></span>
+        <span>📍 맵: <span id="locationText">헤네시스 비치</span></span>
         <span>📅 턴: <span id="turnText">1</span>/12</span>
         <span>💰 현금: <span id="moneyText">1,000,000</span>원</span>
     </div>
-    <div id="dialogue">💬 방향키로 파도를 가르며 상점 입구로 이동해보세요!</div>
+    <div id="dialogue">💬 좌우 방향키로 이동하고, 파란 포탈 앞에서 [위쪽 방향키 / W]를 누르세요!</div>
     <div id="actionArea" style="margin-top: 8px; text-align: center;"></div>
 </div>
 
 <div class="controls">
-    <div></div>
-    <button class="ctrl-btn" onclick="moveChar(0, -15)">▲</button>
-    <div></div>
-    <button class="ctrl-btn" onclick="moveChar(-15, 0)">◄</button>
-    <button class="ctrl-btn" onclick="moveChar(0, 15)">▼</button>
-    <button class="ctrl-btn" onclick="moveChar(15, 0)">►</button>
+    <button class="ctrl-btn" onclick="moveLeft()">◄ 이동</button>
+    <button class="ctrl-btn" onclick="jump()">▲ 점프</button>
+    <button class="ctrl-btn" onclick="moveRight()">이동 ►</button>
+    <button class="ctrl-btn" style="background:#10ac84; color:white;" onclick="interactPortal()">▲ 포탈</button>
 </div>
 
 <script>
@@ -145,134 +149,130 @@ const ctx = canvas.getContext('2d');
 
 let money = 1000000;
 let turn = 1;
-let currentScene = 'town'; // 'town' 또는 건물 ID
+let currentScene = 'town';
 let ownedBuildings = [];
 
-// 플레이어 (튜브 탄 도트 캐릭터)
 const player = {
-    x: 225,
-    y: 200,
-    size: 28,
-    speed: 12,
-    name: '튜브개미'
+    x: 80,
+    y: 220,
+    vx: 0,
+    vy: 0,
+    width: 24,
+    height: 36,
+    speed: 5,
+    jumpPower: -11,
+    groundY: 220,
+    isGrounded: true,
+    facing: 'right',
+    animFrame: 0,
+    name: '메이플개미'
 };
 
-// 해변 상점 건물 데이터
 const buildings = [
-    { id: 'bank', name: '🏦 해변 은행', x: 40, y: 30, w: 100, h: 70, roofColor: '#2ed573', wallColor: '#55efc4' },
-    { id: 'stock', name: '📈 파도 증권', x: 340, y: 30, w: 100, h: 70, roofColor: '#1e90ff', wallColor: '#70a1ff' },
-    { id: 'crypto', name: '🚀 코인 파라솔', x: 40, y: 240, w: 100, h: 70, roofColor: '#ff4757', wallColor: '#ff6b81' },
-    { id: 'realty', name: '🏢 오션 부동산', x: 340, y: 240, w: 100, h: 70, roofColor: '#ffa502', wallColor: '#eccc68' }
+    { id: 'bank', name: '🏦 헤네시스 은행', x: 80, portalX: 130, color: '#10ac84', npcName: '은행원 김수호' },
+    { id: 'stock', name: '📈 엘리니아 증권', x: 260, portalX: 310, color: '#2e86de', npcName: '펀드매니저 박차트' },
+    { id: 'crypto', name: '🚀 커닝시티 코인', x: 440, portalX: 490, color: '#ee5253', npcName: '중개인 나대박' },
+    { id: 'realty', name: '🏢 리스항구 부동산', x: 620, portalX: 670, color: '#feca57', npcName: '중개사 최건물' }
 ];
 
-// 건물 내부 NPC
 const interiorNPCs = {
-    bank: { x: 225, y: 70, name: '🏦 은행원 김수호' },
-    stock: { x: 225, y: 70, name: '📈 펀드매니저 박차트' },
-    crypto: { x: 225, y: 70, name: '🚀 중개인 나대박' },
-    realty: { x: 225, y: 70, name: '🏢 중개사 최건물' }
+    bank: { x: 270, y: 190, name: '🏦 은행원 김수호' },
+    stock: { x: 270, y: 190, name: '📈 펀드매니저 박차트' },
+    crypto: { x: 270, y: 190, name: '🚀 중개인 나대박' },
+    realty: { x: 270, y: 190, name: '🏢 중개사 최건물' }
 };
 
-let nearTarget = null;
+let cameraX = 0;
+let portalAnim = 0;
+let keys = {};
 
-// 키보드 이동
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') moveChar(0, -player.speed);
-    if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') moveChar(0, player.speed);
-    if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') moveChar(-player.speed, 0);
-    if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') moveChar(player.speed, 0);
+    keys[e.key] = true;
+    if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') && currentScene === 'town') {
+        interactPortal();
+    }
+    if ((e.key === ' ' || e.key === 'Spacebar') && player.isGrounded) {
+        jump();
+    }
 });
+document.addEventListener('keyup', (e) => { keys[e.key] = false; });
 
-function moveChar(dx, dy) {
-    if (turn > 12 || money <= 0) return;
-    
-    player.x = Math.max(15, Math.min(canvas.width - player.size - 15, player.x + dx));
-    player.y = Math.max(15, Math.min(canvas.height - player.size - 15, player.y + dy));
-    
-    checkProximity();
-    draw();
+function moveLeft() { player.vx = -player.speed; player.facing = 'left'; }
+function moveRight() { player.vx = player.speed; player.facing = 'right'; }
+function jump() {
+    if (player.isGrounded) {
+        player.vy = player.jumpPower;
+        player.isGrounded = false;
+    }
 }
 
-function checkProximity() {
-    nearTarget = null;
-    const actionArea = document.getElementById('actionArea');
-    const dialogue = document.getElementById('dialogue');
-    
+function interactPortal() {
     if (currentScene === 'town') {
         for (let b of buildings) {
-            let cx = b.x + b.w / 2;
-            let cy = b.y + b.h;
-            let dist = Math.hypot(cx - (player.x + player.size/2), cy - (player.y + player.size/2));
-            if (dist < 45) {
-                nearTarget = b;
-                break;
+            if (Math.abs(player.x - b.portalX) < 30) {
+                enterBuilding(b.id);
+                return;
             }
-        }
-        
-        if (nearTarget) {
-            dialogue.innerHTML = `📍 <b>[${nearTarget.name}]</b> 입구입니다.`;
-            actionArea.innerHTML = `<button class="enter-btn" onclick="enterBuilding('${nearTarget.id}')">🚪 건물 입장하기</button>`;
-        } else {
-            dialogue.innerHTML = "💬 해변을 거닐며 원하는 상점 입구로 다가가 보세요!";
-            actionArea.innerHTML = "";
-        }
-    } else {
-        let npc = interiorNPCs[currentScene];
-        let dist = Math.hypot((npc.x + 14) - (player.x + player.size/2), (npc.y + 14) - (player.y + player.size/2));
-        
-        if (player.y > canvas.height - 50) {
-            dialogue.innerHTML = "🚪 밖으로 나가는 출구입니다.";
-            actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
-        } else if (dist < 55) {
-            dialogue.innerHTML = `💬 <b>${npc.name}</b>: "어서오세요, 어떤 거래를 도와드릴까요?"`;
-            renderDialogueOptions(currentScene);
-        } else {
-            dialogue.innerHTML = `🏢 [${buildings.find(b=>b.id===currentScene).name} 내부] 카운터의 직원에게 다가가 보세요.`;
-            actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
         }
     }
 }
 
-function enterBuilding(buildingId) {
-    currentScene = buildingId;
-    player.x = 225;
-    player.y = 280;
-    
-    const bObj = buildings.find(b => b.id === buildingId);
+function enterBuilding(bId) {
+    currentScene = bId;
+    player.x = 80;
+    player.y = 220;
+    const bObj = buildings.find(b => b.id === bId);
     document.getElementById('locationText').innerText = bObj.name;
     checkProximity();
-    draw();
 }
 
 function exitBuilding() {
     let bObj = buildings.find(b => b.id === currentScene);
     currentScene = 'town';
-    player.x = bObj.x + bObj.w/2 - player.size/2;
-    player.y = bObj.y + bObj.h + 10;
-    
-    document.getElementById('locationText').innerText = '해변 리조트';
+    player.x = bObj.portalX;
+    player.y = 220;
+    document.getElementById('locationText').innerText = '헤네시스 비치';
     checkProximity();
-    draw();
+}
+
+function checkProximity() {
+    const actionArea = document.getElementById('actionArea');
+    const dialogue = document.getElementById('dialogue');
+
+    if (currentScene === 'town') {
+        let nearB = buildings.find(b => Math.abs(player.x - b.portalX) < 30);
+        if (nearB) {
+            dialogue.innerHTML = `✨ <b>[${nearB.name}] 포탈 앞입니다!</b> [위쪽 방향키 / W]를 눌러 입장하세요!`;
+            actionArea.innerHTML = `<button class="enter-btn" onclick="enterBuilding('${nearB.id}')">🚪 포탈 입장하기</button>`;
+        } else {
+            dialogue.innerHTML = "💬 좌우 방향키로 차원 포탈 위치까지 이동해 보세요!";
+            actionArea.innerHTML = "";
+        }
+    } else {
+        let npc = interiorNPCs[currentScene];
+        let dist = Math.abs(player.x - npc.x);
+        
+        if (player.x < 40) {
+            dialogue.innerHTML = "🚪 밖으로 나가는 출구 포탈입니다.";
+            actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
+        } else if (dist < 50) {
+            dialogue.innerHTML = `💬 <b>${npc.name}</b>: "어서오세요, 어떤 금융 거래를 진행하시겠습니까?"`;
+            renderDialogueOptions(currentScene);
+        } else {
+            dialogue.innerHTML = `🏢 카운터에 있는 직원에게 다어가보세요!`;
+            actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
+        }
+    }
 }
 
 function renderDialogueOptions(type) {
     const actionArea = document.getElementById('actionArea');
-    
     if (type === 'bank') {
-        actionArea.innerHTML = `
-            <button class="action-btn" onclick="investBank()">🏦 예금 가입 (+5%)</button>
-            <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>
-        `;
+        actionArea.innerHTML = `<button class="action-btn" onclick="investBank()">🏦 예금 가입 (+5%)</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
     } else if (type === 'stock') {
-        actionArea.innerHTML = `
-            <button class="action-btn" onclick="investStock()">📈 주식 매수 (+30% / -20%)</button>
-            <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>
-        `;
+        actionArea.innerHTML = `<button class="action-btn" onclick="investStock()">📈 주식 매수 (+30% / -20%)</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
     } else if (type === 'crypto') {
-        actionArea.innerHTML = `
-            <button class="action-btn" onclick="investCrypto()">🚀 코인 올인 (+150% / -40%)</button>
-            <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>
-        `;
+        actionArea.innerHTML = `<button class="action-btn" onclick="investCrypto()">🚀 코인 올인 (+150% / -40%)</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
     } else if (type === 'realty') {
         actionArea.innerHTML = `
             <button class="action-btn" onclick="buyBuilding('반지하 고시원', 10000000, 500000)">🏚️ 고시원 (1천만)</button>
@@ -289,58 +289,26 @@ function processTurn() {
     money += rentSum;
     turn += 1;
     updateUI();
-    
-    if (money >= 100000000) {
-        alert("🎉 축하합니다! 1억 원을 모아 건물주가 되었습니다!");
-    } else if (turn > 12) {
-        alert("⏱️️ 12턴이 지났습니다! 최종 보유 자산: " + money.toLocaleString() + "원");
-    } else if (money <= 0) {
-        alert("💥 파산했습니다! 게임 오버!");
-    }
+    if (money >= 100000000) alert("🎉 1억 원 달성! 강남 건물주가 되었습니다!");
+    else if (turn > 12) alert("⏱ 12턴 종료! 최종 자산: " + money.toLocaleString() + "원");
+    else if (money <= 0) alert("💥 파산했습니다!");
 }
 
-function investBank() {
-    let profit = Math.floor(money * 0.05);
-    money += profit;
-    alert(`🏦 [김수호 직원]: "이자 +${profit.toLocaleString()}원이 입금되었습니다."`);
-    processTurn();
-}
-
+function investBank() { money += Math.floor(money * 0.05); alert("🏦 적금 이자가 입금되었습니다!"); processTurn(); }
 function investStock() {
-    if (Math.random() < 0.5) {
-        let profit = Math.floor(money * 0.3);
-        money += profit;
-        alert(`📈 [박차트 매니저]: "주식이 대폭등했습니다! +${profit.toLocaleString()}원!"`);
-    } else {
-        let loss = Math.floor(money * 0.2);
-        money -= loss;
-        alert(`📉 [박차트 매니저]: "주가 하락... -${loss.toLocaleString()}원 손실."`);
-    }
+    if (Math.random() < 0.5) { money += Math.floor(money * 0.3); alert("📈 주식 대폭등!"); }
+    else { money -= Math.floor(money * 0.2); alert("📉 주가 손실..."); }
     processTurn();
 }
-
 function investCrypto() {
-    if (Math.random() < 0.2) {
-        let profit = Math.floor(money * 1.5);
-        money += profit;
-        alert(`🚨 [나대박 중개인]: "떡상으로 +${profit.toLocaleString()}원 초대박!"`);
-    } else {
-        let loss = Math.floor(money * 0.4);
-        money -= loss;
-        alert(`📉 [나대박 중개인]: "떡락해서 -${loss.toLocaleString()}원 손실..."`);
-    }
+    if (Math.random() < 0.2) { money += Math.floor(money * 1.5); alert("🚀 코인 초대박 폭등!"); }
+    else { money -= Math.floor(money * 0.4); alert("📉 코인 폭락..."); }
     processTurn();
 }
-
 function buyBuilding(name, price, rent) {
-    if (money < price) {
-        alert("[최건물 중개사]: 잔액이 부족합니다!");
-        return;
-    }
-    money -= price;
-    ownedBuildings.push({ name, rent });
-    alert(`🎉 [최건물 중개사]: "${name} 계약 성공!"`);
-    updateUI();
+    if (money < price) { alert("잔액이 부족합니다!"); return; }
+    money -= price; ownedBuildings.push({ name, rent });
+    alert(`🎉 [${name}] 매수 성공!`); updateUI();
 }
 
 function updateUI() {
@@ -348,172 +316,151 @@ function updateUI() {
     document.getElementById('turnText').innerText = turn;
 }
 
-// ---------------- 픽셀 아트 렌더링 ----------------
+function update() {
+    if (keys['ArrowLeft'] || keys['a'] || keys['A']) { player.vx = -player.speed; player.facing = 'left'; }
+    else if (keys['ArrowRight'] || keys['d'] || keys['D']) { player.vx = player.speed; player.facing = 'right'; }
+    else { player.vx *= 0.6; }
+
+    player.x += player.vx;
+    player.vy += 0.6;
+    player.y += player.vy;
+
+    if (player.y >= player.groundY) {
+        player.y = player.groundY;
+        player.vy = 0;
+        player.isGrounded = true;
+    }
+
+    if (currentScene === 'town') {
+        player.x = Math.max(20, Math.min(780, player.x));
+        cameraX = player.x - canvas.width / 2;
+        cameraX = Math.max(0, Math.min(800 - canvas.width, cameraX));
+    } else {
+        player.x = Math.max(20, Math.min(500, player.x));
+        cameraX = 0;
+    }
+
+    portalAnim += 0.08;
+    player.animFrame += 0.15;
+
+    checkProximity();
+    draw();
+    requestAnimationFrame(update);
+}
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    if (currentScene === 'town') {
-        drawBeachTown();
-    } else {
-        drawInterior();
-    }
-    
-    // 플레이어: 오리 튜브 탄 도트 캐릭터
-    drawTubeCharacter(player.x, player.y, player.name);
+    ctx.save();
+    ctx.translate(-cameraX, 0);
+
+    if (currentScene === 'town') drawTown();
+    else drawInterior();
+
+    drawMapleCharacter(player.x, player.y, player.facing);
+    ctx.restore();
 }
 
-// 해변 마을 (모래사장 + 바다 파도 도트)
-function drawBeachTown() {
-    // 1. 모래사장 배경
-    ctx.fillStyle = '#f6e58d';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // 모래 질감 픽셀 도트들
-    ctx.fillStyle = '#f7d794';
-    for (let i = 0; i < canvas.width; i += 16) {
-        for (let j = 0; j < canvas.height; j += 16) {
-            if ((i + j) % 32 === 0) ctx.fillRect(i, j, 4, 4);
-        }
-    }
-    
-    // 2. 바다 영역 (중앙 로드)
+function drawTown() {
     ctx.fillStyle = '#74b9ff';
-    ctx.fillRect(190, 0, 100, canvas.height);
-    ctx.fillRect(0, 140, canvas.width, 80);
+    ctx.fillRect(cameraX, 0, canvas.width, 180);
     
-    // 파도 픽셀 디테일
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(195, 20, 12, 3);
-    ctx.fillRect(260, 80, 15, 3);
-    ctx.fillRect(210, 220, 10, 3);
-    ctx.fillRect(40, 155, 20, 3);
-    ctx.fillRect(320, 185, 18, 3);
-    
-    // 3. 픽셀 건물들 (파라솔 & 미니 리조트 디자인)
+    ctx.fillStyle = '#0984e3';
+    ctx.beginPath();
+    ctx.arc(100, 200, 150, 0, Math.PI, true);
+    ctx.arc(400, 220, 200, 0, Math.PI, true);
+    ctx.arc(700, 190, 160, 0, Math.PI, true);
+    ctx.fill();
+
+    ctx.fillStyle = '#2ed573';
+    ctx.fillRect(0, 256, 800, 90);
+    ctx.fillStyle = '#26de81';
+    ctx.fillRect(0, 256, 800, 10);
+
     buildings.forEach(b => {
-        // 건물 지붕
-        ctx.fillStyle = b.roofColor;
-        ctx.fillRect(b.x, b.y, b.w, 20);
-        
-        // 지붕 도트 테두리
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, 130, 90, 126);
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(b.x, b.y + 18, b.w, 3);
-        
-        // 건물 벽체
-        ctx.fillStyle = b.wallColor;
-        ctx.fillRect(b.x + 5, b.y + 20, b.w - 10, b.h - 20);
-        
-        // 입구 문
-        ctx.fillStyle = '#2d3436';
-        ctx.fillRect(b.x + b.w/2 - 12, b.y + b.h - 22, 24, 22);
-        
-        // 이름표
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 11px sans-serif';
+        ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(b.name, b.x + b.w/2, b.y + 14);
+        ctx.fillText(b.name, b.x + 45, 120);
+
+        let px = b.portalX;
+        let py = 220;
+        let scale = Math.sin(portalAnim) * 3;
+        ctx.strokeStyle = '#00d2d3';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(px, py, 14 + scale, 28 + scale, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(0, 210, 211, 0.3)';
+        ctx.fill();
     });
 }
 
-// 건물 내부 픽셀 타일
 function drawInterior() {
-    let npc = interiorNPCs[currentScene];
     let bObj = buildings.find(b => b.id === currentScene);
-    
-    // 바닥 목재/타일 느낌
+    let npc = interiorNPCs[currentScene];
+
     ctx.fillStyle = '#d2dae2';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // 격자 타일 라인
-    ctx.strokeStyle = '#2c3e50';
-    ctx.lineWidth = 1;
-    for(let x=0; x<canvas.width; x+=20) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-    }
-    for(let y=0; y<canvas.height; y+=20) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-    }
-    
-    // 벽면
-    ctx.fillStyle = bObj.roofColor;
-    ctx.fillRect(0, 0, canvas.width, 40);
-    
-    // 상담 카운터 Desk
+    ctx.fillRect(0, 0, 540, 340);
+    ctx.fillStyle = bObj.color;
+    ctx.fillRect(0, 0, 540, 60);
+    ctx.fillStyle = '#2ed573';
+    ctx.fillRect(0, 256, 540, 90);
+
     ctx.fillStyle = '#e67e22';
-    ctx.fillRect(130, 100, 220, 24);
-    ctx.fillStyle = '#d35400';
-    ctx.fillRect(130, 120, 220, 8);
-    
-    // 하단 출구
+    ctx.fillRect(220, 210, 100, 46);
+
+    ctx.strokeStyle = '#ff4757';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(30, 220, 12, 26, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    drawNPC(npc.x, npc.y, npc.name);
+}
+
+function drawMapleCharacter(x, y, facing) {
+    let bounce = Math.sin(player.animFrame) * 2;
+    if (!player.isGrounded) bounce = -4;
+
     ctx.fillStyle = '#ff4757';
-    ctx.fillRect(200, canvas.height - 16, 80, 16);
-    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 10, y - 26 + bounce, 20, 8);
+    ctx.fillStyle = '#ff7675';
+    ctx.fillRect(x - 8, y - 18 + bounce, 16, 10);
+
+    ctx.fillStyle = '#000000';
+    let eyeOff = facing === 'right' ? 2 : -4;
+    ctx.fillRect(x + eyeOff, y - 14 + bounce, 3, 5);
+    ctx.fillRect(x + eyeOff + 6, y - 14 + bounce, 3, 5);
+
+    ctx.fillStyle = '#f1c40f';
+    ctx.fillRect(x - 12, y - 6 + bounce, 24, 12);
+    ctx.fillStyle = '#74b9ff';
+    ctx.fillRect(x - 6, y - 8 + bounce, 12, 8);
+
+    ctx.fillStyle = '#2d3436';
     ctx.font = 'bold 10px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText("EXIT 출구", 240, canvas.height - 4);
-    
-    // NPC 사람 캐릭터 (도트 스타일)
-    drawHumanNPC(npc.x, npc.y, npc.name);
+    ctx.fillText(player.name, x, y - 32 + bounce);
 }
 
-// 튜브 탄 오리/캐릭터 픽셀 그림
-function drawTubeCharacter(x, y, name) {
-    // 1. 노란색 오리 튜브
-    ctx.fillStyle = '#f1c40f';
-    ctx.fillRect(x - 4, y + 10, 36, 16); // 튜브 몸통
-    
-    // 오리 머리 (왼쪽)
-    ctx.fillRect(x - 8, y + 2, 10, 12);
-    // 오리 부리
-    ctx.fillStyle = '#e67e22';
-    ctx.fillRect(x - 12, y + 6, 6, 4);
-    
-    // 2. 캐릭터 몸통 & 얼굴 (튜브 안에 탄 상태)
-    ctx.fillStyle = '#ff7979'; // 옷
-    ctx.fillRect(x + 6, y + 4, 16, 10);
-    
-    ctx.fillStyle = '#ffdd59'; // 피부톤
-    ctx.fillRect(x + 8, y - 6, 12, 12);
-    
-    // 눈 (픽셀)
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(x + 11, y - 2, 2, 3);
-    ctx.fillRect(x + 16, y - 2, 2, 3);
-    
-    // 이름표
-    ctx.fillStyle = '#0c2461';
-    ctx.font = 'bold 11px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(name, x + 14, y - 12);
-}
-
-// 건물 내부 사람 NPC 픽셀 그림
-function drawHumanNPC(x, y, name) {
-    // 머리
+function drawNPC(x, y, name) {
     ctx.fillStyle = '#2c3e50';
-    ctx.fillRect(x, y, 28, 10);
-    ctx.fillStyle = '#ffdd59';
-    ctx.fillRect(x + 2, y + 8, 24, 12);
-    
-    // 눈
+    ctx.fillRect(x - 8, y - 24, 16, 10);
+    ctx.fillStyle = '#ffeaa7';
+    ctx.fillRect(x - 6, y - 14, 12, 10);
+    ctx.fillStyle = '#0984e3';
+    ctx.fillRect(x - 8, y - 4, 16, 14);
+
     ctx.fillStyle = '#000000';
-    ctx.fillRect(x + 6, y + 12, 3, 3);
-    ctx.fillRect(x + 19, y + 12, 3, 3);
-    
-    // 유니폼 몸통
-    ctx.fillStyle = '#2980b9';
-    ctx.fillRect(x - 2, y + 20, 32, 18);
-    
-    // 이름표
-    ctx.fillStyle = '#2c3e50';
-    ctx.font = 'bold 11px sans-serif';
+    ctx.font = 'bold 10px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(name, x + 14, y - 6);
+    ctx.fillText(name, x, y - 30);
 }
 
-draw();
-checkProximity();
+requestAnimationFrame(update);
 </script>
 </body>
 </html>
