@@ -3,8 +3,8 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="메이플 비치 자산관리 RPG", page_icon="🍁", layout="centered")
 
-st.title("🍁 메이플 픽셀 비치 & 뉴스 찌라시/미니게임 RPG")
-st.caption("좌우 방향키(A, D)로 이동, Space키로 점프! 포탈[▲ / W]을 타고 들어가 뉴스 변수 및 미니게임에 도전하세요.")
+st.title("🍁 고퀄리티 픽셀 비치 & 뉴스 찌라시 RPG")
+st.caption("좌우 방향키(A, D)로 이동, Space키로 점프! 포탈[▲ / W]을 타고 들어가 미니게임에 도전하세요.")
 
 game_html = """
 <!DOCTYPE html>
@@ -14,7 +14,7 @@ game_html = """
     body {
         margin: 0;
         padding: 0;
-        background-color: #0d1117;
+        background-color: #0b0e14;
         color: white;
         font-family: 'Comic Sans MS', 'Courier New', sans-serif;
         display: flex;
@@ -23,37 +23,38 @@ game_html = """
     }
     #newsTicker {
         width: 540px;
-        background: #1e272e;
-        color: #ffdd59;
+        background: #151922;
+        color: #feca57;
         font-size: 13px;
         font-weight: bold;
-        padding: 6px 12px;
-        border-radius: 6px 6px 0 0;
-        border: 2px solid #54a0ff;
+        padding: 8px 12px;
+        border-radius: 8px 8px 0 0;
+        border: 2px solid #38ada9;
         border-bottom: none;
         box-sizing: border-box;
         overflow: hidden;
         white-space: nowrap;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
     }
     #gameContainer {
         position: relative;
     }
     canvas {
-        border: 4px solid #ffbe76;
-        border-radius: 0 0 12px 12px;
-        background-color: #130f40;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.8);
-        image-rendering: pixelated;
+        border: 3px solid #38ada9;
+        border-radius: 0 0 10px 10px;
+        background-color: #0c1017;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        image-rendering: pixelated; /* 도트 그래픽 선명도 적용 */
     }
     #uiBox {
         width: 540px;
-        background: linear-gradient(135deg, #222f3e, #10ac84);
+        background: linear-gradient(135deg, #1e272e, #0f2027);
         padding: 14px;
         border-radius: 10px;
         margin-top: 10px;
         box-sizing: border-box;
-        border: 2px solid #54a0ff;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        border: 2px solid #38ada9;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.6);
     }
     .status-bar {
         display: flex;
@@ -110,9 +111,9 @@ game_html = """
         height: 50px;
         font-size: 16px;
         font-weight: bold;
-        background: #222f3e;
+        background: #1e272e;
         color: #feca57;
-        border: 2px solid #54a0ff;
+        border: 2px solid #38ada9;
         border-radius: 8px;
         cursor: pointer;
         box-shadow: 0 3px 0 #10ac84;
@@ -123,15 +124,14 @@ game_html = """
     }
     #dialogue {
         min-height: 48px;
-        background: rgba(15, 23, 42, 0.9);
+        background: rgba(10, 15, 25, 0.95);
         padding: 10px;
         border-radius: 6px;
-        border: 2px solid #54a0ff;
+        border: 2px solid #38ada9;
         margin-top: 5px;
         font-size: 13px;
         line-height: 1.4;
     }
-    /* 미니게임 오버레이 UI */
     #minigameBox {
         display: none;
         background: rgba(0,0,0,0.85);
@@ -144,11 +144,12 @@ game_html = """
     #meterBar {
         width: 100%;
         height: 20px;
-        background: #333;
+        background: #222;
         border-radius: 10px;
         position: relative;
         overflow: hidden;
         margin: 8px 0;
+        border: 1px solid #555;
     }
     #meterIndicator {
         width: 12px;
@@ -210,7 +211,6 @@ let turn = 1;
 let currentScene = 'town';
 let ownedBuildings = [];
 
-// 속보 뉴스 이벤트 데이터 및 승률 가중치
 let currentNews = { text: "평화로운 메이플시티입니다.", stockMod: 0, cryptoMod: 0 };
 const newsEvents = [
     { text: "🔥 [속보] 엘리니아 AI 반도체 호재 발표! 주식 대박 예감!", stockMod: 0.35, cryptoMod: 0 },
@@ -234,10 +234,10 @@ const player = {
 };
 
 const buildings = [
-    { id: 'bank', name: '🏦 헤네시스 은행', x: 80, portalX: 130, color: '#10ac84' },
-    { id: 'stock', name: '📈 엘리니아 증권', x: 260, portalX: 310, color: '#2e86de' },
-    { id: 'crypto', name: '🚀 커닝시티 코인', x: 440, portalX: 490, color: '#ee5253' },
-    { id: 'realty', name: '🏢 리스항구 부동산', x: 620, portalX: 670, color: '#feca57' }
+    { id: 'bank', name: '🏦 헤네시스 은행', x: 80, portalX: 130, colorMain: '#2ed573', colorRoof: '#10ac84' },
+    { id: 'stock', name: '📈 엘리니아 증권', x: 260, portalX: 310, colorMain: '#54a0ff', colorRoof: '#2e86de' },
+    { id: 'crypto', name: '🚀 커닝시티 코인', x: 440, portalX: 490, colorMain: '#ff6b6b', colorRoof: '#ee5253' },
+    { id: 'realty', name: '🏢 리스항구 부동산', x: 620, portalX: 670, colorMain: '#feca57', colorRoof: '#ff9f43' }
 ];
 
 const interiorNPCs = {
@@ -251,7 +251,6 @@ let cameraX = 0;
 let portalAnim = 0;
 let keys = {};
 
-// 미니게임 제어 변수
 let meterPos = 0;
 let meterSpeed = 4;
 let meterActive = false;
@@ -356,7 +355,6 @@ function renderDialogueOptions(type) {
     }
 }
 
-// 타이밍 미니게임 시작
 function startStockMiniGame() {
     document.getElementById('actionArea').innerHTML = '';
     document.getElementById('minigameBox').style.display = 'block';
@@ -372,7 +370,7 @@ function startCryptoMiniGame() {
     document.getElementById('minigameBox').style.display = 'block';
     document.getElementById('minigameTitle').innerText = '🎰 코인 타겟 타이밍! 초록 영역에 멈추면 3배 떡상!';
     meterPos = 0;
-    meterSpeed = 10; // 빠른 속도
+    meterSpeed = 10;
     meterActive = true;
     updateMeter();
 }
@@ -390,7 +388,7 @@ function stopMeter() {
     cancelAnimationFrame(meterAnimId);
     document.getElementById('minigameBox').style.display = 'none';
 
-    let success = meterPos >= 200 && meterPos <= 260; // 초록존 적중 여부
+    let success = meterPos >= 200 && meterPos <= 260;
     if (currentScene === 'stock') {
         let winProb = 0.5 + currentNews.stockMod;
         if (success || Math.random() < winProb) {
@@ -422,7 +420,6 @@ function processTurn() {
     money += rentSum;
     turn += 1;
     
-    // 다음 턴 랜덤 속보 뉴스 생성
     if (Math.random() < 0.7) {
         currentNews = newsEvents[Math.floor(Math.random() * newsEvents.length)];
     } else {
@@ -488,108 +485,206 @@ function draw() {
     if (currentScene === 'town') drawTown();
     else drawInterior();
 
-    drawMapleCharacter(player.x, player.y, player.facing);
+    drawDetailedMapleChar(player.x, player.y, player.facing);
     ctx.restore();
 }
 
+// === 고퀄리티 픽셀 아트 타운 렌더링 ===
 function drawTown() {
-    ctx.fillStyle = '#74b9ff';
+    // 하늘 그라데이션
+    let skyGradient = ctx.createLinearGradient(0, 0, 0, 180);
+    skyGradient.addColorStop(0, '#4a69bd');
+    skyGradient.addColorStop(1, '#6a89cc');
+    ctx.fillStyle = skyGradient;
     ctx.fillRect(cameraX, 0, canvas.width, 180);
-    
-    ctx.fillStyle = '#0984e3';
+
+    // 구름 도트
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillRect(cameraX + 50, 30, 40, 10);
+    ctx.fillRect(cameraX + 60, 24, 20, 6);
+    ctx.fillRect(cameraX + 300, 50, 50, 12);
+
+    // 원경 산맥
+    ctx.fillStyle = '#1e3799';
     ctx.beginPath();
-    ctx.arc(100, 200, 150, 0, Math.PI, true);
-    ctx.arc(400, 220, 200, 0, Math.PI, true);
-    ctx.arc(700, 190, 160, 0, Math.PI, true);
+    ctx.arc(100, 220, 140, 0, Math.PI, true);
+    ctx.arc(400, 230, 180, 0, Math.PI, true);
+    ctx.arc(700, 210, 150, 0, Math.PI, true);
     ctx.fill();
 
-    ctx.fillStyle = '#2ed573';
-    ctx.fillRect(0, 256, 800, 90);
-    ctx.fillStyle = '#26de81';
-    ctx.fillRect(0, 256, 800, 10);
+    // 잔디 땅 & 지형 타일링
+    ctx.fillStyle = '#78e08f';
+    ctx.fillRect(0, 256, 800, 12); // 상단 싱그러운 잔디층
+    ctx.fillStyle = '#38ada9';
+    ctx.fillRect(0, 268, 800, 72); // 흙층
 
+    // 잔디 패턴 도트
+    ctx.fillStyle = '#b8e994';
+    for (let x = 0; x < 800; x += 16) {
+        ctx.fillRect(x, 256, 4, 4);
+    }
+
+    // 픽셀 건물 그리기 (셰이딩 및 구조 보강)
     buildings.forEach(b => {
-        ctx.fillStyle = b.color;
-        ctx.fillRect(b.x, 130, 90, 126);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(b.name, b.x + 45, 120);
+        // 건물 그림자
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillRect(b.x - 5, 250, 100, 10);
 
+        // 건물 벽체
+        ctx.fillStyle = b.colorMain;
+        ctx.fillRect(b.x, 130, 90, 126);
+
+        // 벽체 우측 3D 테두리 음영
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.fillRect(b.x + 80, 130, 10, 126);
+
+        // 지붕 (삼각/격자 형태)
+        ctx.fillStyle = b.colorRoof;
+        ctx.fillRect(b.x - 6, 115, 102, 18);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(b.x - 6, 131, 102, 3); // 지붕 하단 하이라이트
+
+        // 창문 도트
+        ctx.fillStyle = '#f8c291';
+        ctx.fillRect(b.x + 15, 145, 20, 20);
+        ctx.fillRect(b.x + 55, 145, 20, 20);
+        ctx.fillStyle = '#0c2461';
+        ctx.fillRect(b.x + 24, 145, 2, 20);
+        ctx.fillRect(b.x + 15, 154, 20, 2);
+        ctx.fillRect(b.x + 64, 145, 2, 20);
+        ctx.fillRect(b.x + 55, 154, 20, 2);
+
+        // 건물 간판
+        ctx.fillStyle = '#1e272e';
+        ctx.fillRect(b.x + 10, 95, 70, 18);
+        ctx.strokeStyle = '#feca57';
+        ctx.strokeRect(b.x + 10, 95, 70, 18);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(b.name, b.x + 45, 108);
+
+        // 차원 포탈 이펙트
         let px = b.portalX;
         let py = 220;
         let scale = Math.sin(portalAnim) * 3;
+        
         ctx.strokeStyle = '#00d2d3';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.ellipse(px, py, 14 + scale, 28 + scale, 0, 0, Math.PI * 2);
         ctx.stroke();
 
-        ctx.fillStyle = 'rgba(0, 210, 211, 0.3)';
+        ctx.fillStyle = 'rgba(0, 210, 211, 0.35)';
         ctx.fill();
     });
 }
 
+// === 고퀄리티 실내 매장 렌더링 ===
 function drawInterior() {
     let bObj = buildings.find(b => b.id === currentScene);
     let npc = interiorNPCs[currentScene];
 
-    ctx.fillStyle = '#d2dae2';
+    // 바닥 목재 격자 타일
+    ctx.fillStyle = '#f8c291';
     ctx.fillRect(0, 0, 540, 340);
-    ctx.fillStyle = bObj.color;
+
+    ctx.strokeStyle = '#e55039';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < 540; x += 20) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 340); ctx.stroke();
+    }
+
+    // 벽면 및 상단 띠
+    ctx.fillStyle = bObj.colorRoof;
     ctx.fillRect(0, 0, 540, 60);
-    ctx.fillStyle = '#2ed573';
+    ctx.fillStyle = '#b71540';
+    ctx.fillRect(0, 56, 540, 4);
+
+    // 하단 카펫
+    ctx.fillStyle = '#78e08f';
     ctx.fillRect(0, 256, 540, 90);
 
+    // 카운터 및 3D 음영
     ctx.fillStyle = '#e67e22';
-    ctx.fillRect(220, 210, 100, 46);
+    ctx.fillRect(200, 200, 140, 50);
+    ctx.fillStyle = '#d35400';
+    ctx.fillRect(200, 240, 140, 10);
+    ctx.strokeStyle = '#ffffff';
+    ctx.strokeRect(200, 200, 140, 50);
 
+    // 출구 포탈
     ctx.strokeStyle = '#ff4757';
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.ellipse(30, 220, 12, 26, 0, 0, Math.PI * 2);
     ctx.stroke();
 
-    drawNPC(npc.x, npc.y, npc.name);
+    drawDetailedNPC(npc.x, npc.y, npc.name);
 }
 
-function drawMapleCharacter(x, y, facing) {
+// === 디테일 픽셀 캐릭터 렌더링 ===
+function drawDetailedMapleChar(x, y, facing) {
     let bounce = Math.sin(player.animFrame) * 2;
     if (!player.isGrounded) bounce = -4;
 
-    ctx.fillStyle = '#ff4757';
+    // 검은색 외곽선(Outline) 효과
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(x - 12, y - 28 + bounce, 24, 34);
+
+    // 모자 (빨간 스냅백)
+    ctx.fillStyle = '#eb2f06';
     ctx.fillRect(x - 10, y - 26 + bounce, 20, 8);
-    ctx.fillStyle = '#ff7675';
+    ctx.fillStyle = '#f8c291'; // 피부톤
     ctx.fillRect(x - 8, y - 18 + bounce, 16, 10);
 
-    ctx.fillStyle = '#000000';
+    // 눈 (초롱초롱한 픽셀 눈)
+    ctx.fillStyle = '#0c2461';
     let eyeOff = facing === 'right' ? 2 : -4;
-    ctx.fillRect(x + eyeOff, y - 14 + bounce, 3, 5);
-    ctx.fillRect(x + eyeOff + 6, y - 14 + bounce, 3, 5);
+    ctx.fillRect(x + eyeOff, y - 15 + bounce, 3, 5);
+    ctx.fillRect(x + eyeOff + 6, y - 15 + bounce, 3, 5);
+    ctx.fillStyle = '#ffffff'; // 눈동자 하이라이트
+    ctx.fillRect(x + eyeOff, y - 15 + bounce, 1, 2);
+    ctx.fillRect(x + eyeOff + 6, y - 15 + bounce, 1, 2);
 
+    // 튜브 (노란 오리 튜브)
     ctx.fillStyle = '#f1c40f';
-    ctx.fillRect(x - 12, y - 6 + bounce, 24, 12);
-    ctx.fillStyle = '#74b9ff';
-    ctx.fillRect(x - 6, y - 8 + bounce, 12, 8);
+    ctx.fillRect(x - 11, y - 6 + bounce, 22, 10);
+    ctx.fillStyle = '#e67e22'; // 부리
+    if (facing === 'right') ctx.fillRect(x + 9, y - 4 + bounce, 4, 3);
+    else ctx.fillRect(x - 13, y - 4 + bounce, 4, 3);
 
-    ctx.fillStyle = '#2d3436';
-    ctx.font = 'bold 10px sans-serif';
+    // 옷
+    ctx.fillStyle = '#4a69bd';
+    ctx.fillRect(x - 5, y - 8 + bounce, 10, 6);
+
+    // 캐릭터 이름표 UI
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(x - 24, y - 38 + bounce, 48, 12);
+    ctx.fillStyle = '#feca57';
+    ctx.font = 'bold 9px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(player.name, x, y - 32 + bounce);
+    ctx.fillText(player.name, x, y - 29 + bounce);
 }
 
-function drawNPC(x, y, name) {
-    ctx.fillStyle = '#2c3e50';
+// === 디테일 NPC 렌더링 ===
+function drawDetailedNPC(x, y, name) {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(x - 10, y - 26, 20, 36);
+
+    ctx.fillStyle = '#2c3e50'; // 머리
     ctx.fillRect(x - 8, y - 24, 16, 10);
-    ctx.fillStyle = '#ffeaa7';
+    ctx.fillStyle = '#f8c291'; // 피부
     ctx.fillRect(x - 6, y - 14, 12, 10);
-    ctx.fillStyle = '#0984e3';
+    ctx.fillStyle = '#0984e3'; // 정장
     ctx.fillRect(x - 8, y - 4, 16, 14);
 
-    ctx.fillStyle = '#000000';
-    ctx.font = 'bold 10px sans-serif';
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(x - 35, y - 38, 70, 12);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 9px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(name, x, y - 30);
+    ctx.fillText(name, x, y - 29);
 }
 
 requestAnimationFrame(update);
