@@ -560,3 +560,131 @@ function drawTown() {
 
     ctx.fillStyle = '#111827';
     ctx.fillRect(cameraX + 50, 100, 90, 160);
+    ctx.fillRect(cameraX + 300, 70, 110, 190);
+    ctx.fillRect(cameraX + 700, 80, 100, 180);
+    ctx.fillRect(cameraX + 1100, 50, 130, 210);
+
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, 360, 1600, 120);
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(0, 360, 1600, 14);
+
+    buildings.forEach(b => {
+        ctx.fillStyle = b.colorMain;
+        ctx.fillRect(b.x, 110, 200, 250);
+
+        ctx.fillStyle = '#334155';
+        for (let wx = b.x + 20; wx < b.x + 180; wx += 40) {
+            for (let wy = 140; wy < 320; wy += 45) {
+                ctx.fillRect(wx, wy, 22, 28);
+                ctx.fillStyle = '#f1c40f';
+                ctx.fillRect(wx + 3, wy + 3, 16, 22);
+                ctx.fillStyle = '#334155';
+            }
+        }
+
+        ctx.fillStyle = b.accent;
+        ctx.fillRect(b.x, 80, 200, 30);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 14px NeoDunggeunmo, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(b.name, b.x + 100, 100);
+
+        let px = b.portalX;
+        let py = 320;
+        let scale = Math.sin(portalAnim) * 5;
+        
+        ctx.strokeStyle = '#00d2d3';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.ellipse(px, py, 20 + scale, 38 + scale, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(0, 210, 211, 0.4)';
+        ctx.fill();
+    });
+}
+
+function drawInterior() {
+    let bObj = buildings.find(b => b.id === currentScene);
+    let npc = interiorNPCs[currentScene];
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, 840, 480);
+    
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 840, 90);
+
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, 360, 840, 120);
+
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(340, 300, 160, 60);
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(340, 350, 160, 10);
+
+    ctx.strokeStyle = '#ff4757';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.ellipse(40, 320, 18, 36, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    drawModernNPC(npc.x, npc.y, npc.name);
+}
+
+function drawModernPlayer(x, y, facing) {
+    let bounce = Math.sin(player.animFrame) * 2;
+    if (!player.isGrounded) bounce = -6;
+
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(x - 15, y - 40 + bounce, 30, 48);
+
+    ctx.fillStyle = '#f8c291';
+    ctx.fillRect(x - 10, y - 28 + bounce, 20, 15);
+
+    ctx.fillStyle = '#3d5af1';
+    ctx.fillRect(x - 12, y - 36 + bounce, 24, 10);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 9, y - 13 + bounce, 18, 15);
+    ctx.fillStyle = '#1e293b';
+    if (facing === 'right') {
+        ctx.fillRect(x + 1, y - 13 + bounce, 8, 15);
+    } else {
+        ctx.fillRect(x - 9, y - 13 + bounce, 8, 15);
+    }
+
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    ctx.fillRect(x - 40, y - 56 + bounce, 80, 16);
+    ctx.fillStyle = '#f1c40f';
+    ctx.font = 'bold 12px NeoDunggeunmo, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(player.name, x, y - 44 + bounce);
+}
+
+function drawModernNPC(x, y, name) {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(x - 15, y - 40, 30, 48);
+
+    ctx.fillStyle = '#f8c291';
+    ctx.fillRect(x - 10, y - 28, 20, 15);
+    ctx.fillStyle = '#00b894';
+    ctx.fillRect(x - 12, y - 36, 24, 10);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 9, y - 13, 18, 15);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+    ctx.fillRect(x - 55, y - 56, 110, 16);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px NeoDunggeunmo, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(name, x, y - 44);
+}
+
+requestAnimationFrame(update);
+</script>
+</body>
+</html>
+"""
+
+components.html(game_html, height=920)
