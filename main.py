@@ -3,8 +3,8 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="메이플 비치 자산관리 RPG", page_icon="🍁", layout="centered")
 
-st.title("🍁 메이플 픽셀 비치 & 건물 입장 RPG")
-st.caption("좌우 방향키(A, D)로 이동, Space키로 점프! 파란색 차원 포탈 앞에서 [위쪽 방향키(▲) / W]를 눌러 입장하세요.")
+st.title("🍁 메이플 픽셀 비치 & 뉴스 찌라시/미니게임 RPG")
+st.caption("좌우 방향키(A, D)로 이동, Space키로 점프! 포탈[▲ / W]을 타고 들어가 뉴스 변수 및 미니게임에 도전하세요.")
 
 game_html = """
 <!DOCTYPE html>
@@ -21,13 +21,26 @@ game_html = """
         flex-direction: column;
         align-items: center;
     }
+    #newsTicker {
+        width: 540px;
+        background: #1e272e;
+        color: #ffdd59;
+        font-size: 13px;
+        font-weight: bold;
+        padding: 6px 12px;
+        border-radius: 6px 6px 0 0;
+        border: 2px solid #54a0ff;
+        border-bottom: none;
+        box-sizing: border-box;
+        overflow: hidden;
+        white-space: nowrap;
+    }
     #gameContainer {
         position: relative;
-        margin-top: 10px;
     }
     canvas {
         border: 4px solid #ffbe76;
-        border-radius: 12px;
+        border-radius: 0 0 12px 12px;
         background-color: #130f40;
         box-shadow: 0 10px 25px rgba(0,0,0,0.8);
         image-rendering: pixelated;
@@ -118,9 +131,44 @@ game_html = """
         font-size: 13px;
         line-height: 1.4;
     }
+    /* 미니게임 오버레이 UI */
+    #minigameBox {
+        display: none;
+        background: rgba(0,0,0,0.85);
+        border: 2px solid #feca57;
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 8px;
+        text-align: center;
+    }
+    #meterBar {
+        width: 100%;
+        height: 20px;
+        background: #333;
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+        margin: 8px 0;
+    }
+    #meterIndicator {
+        width: 12px;
+        height: 100%;
+        background: #ff4757;
+        position: absolute;
+        left: 0;
+    }
+    #targetZone {
+        width: 60px;
+        height: 100%;
+        background: #2ed573;
+        position: absolute;
+        left: 200px;
+    }
 </style>
 </head>
 <body>
+
+<div id="newsTicker">📰 [속보] 메이플시티 금융 시장이 개장했습니다!</div>
 
 <div id="gameContainer">
     <canvas id="gameCanvas" width="540" height="340"></canvas>
@@ -133,6 +181,16 @@ game_html = """
         <span>💰 현금: <span id="moneyText">1,000,000</span>원</span>
     </div>
     <div id="dialogue">💬 좌우 방향키로 이동하고, 파란 포탈 앞에서 [위쪽 방향키 / W]를 누르세요!</div>
+    
+    <div id="minigameBox">
+        <div id="minigameTitle" style="color:#feca57; font-weight:bold;">🎯 타이밍 게이지 미니게임</div>
+        <div id="meterBar">
+            <div id="targetZone"></div>
+            <div id="meterIndicator"></div>
+        </div>
+        <button class="action-btn" onclick="stopMeter()">STOP (매수 버튼)</button>
+    </div>
+
     <div id="actionArea" style="margin-top: 8px; text-align: center;"></div>
 </div>
 
@@ -152,13 +210,20 @@ let turn = 1;
 let currentScene = 'town';
 let ownedBuildings = [];
 
+// 속보 뉴스 이벤트 데이터 및 승률 가중치
+let currentNews = { text: "평화로운 메이플시티입니다.", stockMod: 0, cryptoMod: 0 };
+const newsEvents = [
+    { text: "🔥 [속보] 엘리니아 AI 반도체 호재 발표! 주식 대박 예감!", stockMod: 0.35, cryptoMod: 0 },
+    { text: "📉 [속보] 커닝시티 해킹 사건 발생! 코인 시장 대폭락 주의!", stockMod: 0, cryptoMod: -0.3 },
+    { text: "🚀 [속보] 세계 중앙은행 금리 인하 결정! 전 금융 시장 폭등장!", stockMod: 0.2, cryptoMod: 0.25 },
+    { text: "⚠️ [속보] 검은 마법사 세금 공세 시작! 자산 시장 냉각!", stockMod: -0.2, cryptoMod: -0.2 }
+];
+
 const player = {
     x: 80,
     y: 220,
     vx: 0,
     vy: 0,
-    width: 24,
-    height: 36,
     speed: 5,
     jumpPower: -11,
     groundY: 220,
@@ -169,10 +234,10 @@ const player = {
 };
 
 const buildings = [
-    { id: 'bank', name: '🏦 헤네시스 은행', x: 80, portalX: 130, color: '#10ac84', npcName: '은행원 김수호' },
-    { id: 'stock', name: '📈 엘리니아 증권', x: 260, portalX: 310, color: '#2e86de', npcName: '펀드매니저 박차트' },
-    { id: 'crypto', name: '🚀 커닝시티 코인', x: 440, portalX: 490, color: '#ee5253', npcName: '중개인 나대박' },
-    { id: 'realty', name: '🏢 리스항구 부동산', x: 620, portalX: 670, color: '#feca57', npcName: '중개사 최건물' }
+    { id: 'bank', name: '🏦 헤네시스 은행', x: 80, portalX: 130, color: '#10ac84' },
+    { id: 'stock', name: '📈 엘리니아 증권', x: 260, portalX: 310, color: '#2e86de' },
+    { id: 'crypto', name: '🚀 커닝시티 코인', x: 440, portalX: 490, color: '#ee5253' },
+    { id: 'realty', name: '🏢 리스항구 부동산', x: 620, portalX: 670, color: '#feca57' }
 ];
 
 const interiorNPCs = {
@@ -185,6 +250,12 @@ const interiorNPCs = {
 let cameraX = 0;
 let portalAnim = 0;
 let keys = {};
+
+// 미니게임 제어 변수
+let meterPos = 0;
+let meterSpeed = 4;
+let meterActive = false;
+let meterAnimId = null;
 
 document.addEventListener('keydown', (e) => {
     keys[e.key] = true;
@@ -232,6 +303,8 @@ function exitBuilding() {
     player.x = bObj.portalX;
     player.y = 220;
     document.getElementById('locationText').innerText = '헤네시스 비치';
+    document.getElementById('minigameBox').style.display = 'none';
+    meterActive = false;
     checkProximity();
 }
 
@@ -256,7 +329,7 @@ function checkProximity() {
             dialogue.innerHTML = "🚪 밖으로 나가는 출구 포탈입니다.";
             actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
         } else if (dist < 50) {
-            dialogue.innerHTML = `💬 <b>${npc.name}</b>: "어서오세요, 어떤 금융 거래를 진행하시겠습니까?"`;
+            dialogue.innerHTML = `💬 <b>${npc.name}</b>: "어서오세요, 미니게임에 참여해 투자 수익율을 직접 제어해보세요!"`;
             renderDialogueOptions(currentScene);
         } else {
             dialogue.innerHTML = `🏢 카운터에 있는 직원에게 다어가보세요!`;
@@ -268,11 +341,11 @@ function checkProximity() {
 function renderDialogueOptions(type) {
     const actionArea = document.getElementById('actionArea');
     if (type === 'bank') {
-        actionArea.innerHTML = `<button class="action-btn" onclick="investBank()">🏦 예금 가입 (+5%)</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
+        actionArea.innerHTML = `<button class="action-btn" onclick="investBank()">🏦 안전 예금 가입 (+5%)</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
     } else if (type === 'stock') {
-        actionArea.innerHTML = `<button class="action-btn" onclick="investStock()">📈 주식 매수 (+30% / -20%)</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
+        actionArea.innerHTML = `<button class="action-btn" onclick="startStockMiniGame()">🎯 주식 타이밍 미니게임 도전</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
     } else if (type === 'crypto') {
-        actionArea.innerHTML = `<button class="action-btn" onclick="investCrypto()">🚀 코인 올인 (+150% / -40%)</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
+        actionArea.innerHTML = `<button class="action-btn" onclick="startCryptoMiniGame()">🎰 코인 폭발 타이밍 도전</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
     } else if (type === 'realty') {
         actionArea.innerHTML = `
             <button class="action-btn" onclick="buyBuilding('반지하 고시원', 10000000, 500000)">🏚️ 고시원 (1천만)</button>
@@ -283,11 +356,80 @@ function renderDialogueOptions(type) {
     }
 }
 
+// 타이밍 미니게임 시작
+function startStockMiniGame() {
+    document.getElementById('actionArea').innerHTML = '';
+    document.getElementById('minigameBox').style.display = 'block';
+    document.getElementById('minigameTitle').innerText = '📈 주식 매수 타이밍! 초록 영역에 멈추세요!';
+    meterPos = 0;
+    meterSpeed = 6;
+    meterActive = true;
+    updateMeter();
+}
+
+function startCryptoMiniGame() {
+    document.getElementById('actionArea').innerHTML = '';
+    document.getElementById('minigameBox').style.display = 'block';
+    document.getElementById('minigameTitle').innerText = '🎰 코인 타겟 타이밍! 초록 영역에 멈추면 3배 떡상!';
+    meterPos = 0;
+    meterSpeed = 10; // 빠른 속도
+    meterActive = true;
+    updateMeter();
+}
+
+function updateMeter() {
+    if (!meterActive) return;
+    meterPos += meterSpeed;
+    if (meterPos > 520 || meterPos < 0) meterSpeed *= -1;
+    document.getElementById('meterIndicator').style.left = meterPos + 'px';
+    meterAnimId = requestAnimationFrame(updateMeter);
+}
+
+function stopMeter() {
+    meterActive = false;
+    cancelAnimationFrame(meterAnimId);
+    document.getElementById('minigameBox').style.display = 'none';
+
+    let success = meterPos >= 200 && meterPos <= 260; // 초록존 적중 여부
+    if (currentScene === 'stock') {
+        let winProb = 0.5 + currentNews.stockMod;
+        if (success || Math.random() < winProb) {
+            let profit = Math.floor(money * 0.4);
+            money += profit;
+            alert(`🎉 [주식 대성공!] 타이밍 적중으로 +${profit.toLocaleString()}원 수익!`);
+        } else {
+            let loss = Math.floor(money * 0.2);
+            money -= loss;
+            alert(`📉 [주식 손실] 타이밍 실패... -${loss.toLocaleString()}원`);
+        }
+    } else if (currentScene === 'crypto') {
+        if (success) {
+            let profit = Math.floor(money * 2.0);
+            money += profit;
+            alert(`🚀 [코인 초대박!] 타겟 저격으로 +${profit.toLocaleString()}원 폭등!!`);
+        } else {
+            let loss = Math.floor(money * 0.5);
+            money -= loss;
+            alert(`💥 [코인 청산] 타이밍 실패로 -${loss.toLocaleString()}원 폭락...`);
+        }
+    }
+    processTurn();
+}
+
 function processTurn() {
     let rentSum = 0;
     ownedBuildings.forEach(b => rentSum += b.rent);
     money += rentSum;
     turn += 1;
+    
+    // 다음 턴 랜덤 속보 뉴스 생성
+    if (Math.random() < 0.7) {
+        currentNews = newsEvents[Math.floor(Math.random() * newsEvents.length)];
+    } else {
+        currentNews = { text: "📰 [속보] 금융 시장이 비교적 안정세를 유지하고 있습니다.", stockMod: 0, cryptoMod: 0 };
+    }
+    document.getElementById('newsTicker').innerText = currentNews.text;
+
     updateUI();
     if (money >= 100000000) alert("🎉 1억 원 달성! 강남 건물주가 되었습니다!");
     else if (turn > 12) alert("⏱ 12턴 종료! 최종 자산: " + money.toLocaleString() + "원");
@@ -295,16 +437,6 @@ function processTurn() {
 }
 
 function investBank() { money += Math.floor(money * 0.05); alert("🏦 적금 이자가 입금되었습니다!"); processTurn(); }
-function investStock() {
-    if (Math.random() < 0.5) { money += Math.floor(money * 0.3); alert("📈 주식 대폭등!"); }
-    else { money -= Math.floor(money * 0.2); alert("📉 주가 손실..."); }
-    processTurn();
-}
-function investCrypto() {
-    if (Math.random() < 0.2) { money += Math.floor(money * 1.5); alert("🚀 코인 초대박 폭등!"); }
-    else { money -= Math.floor(money * 0.4); alert("📉 코인 폭락..."); }
-    processTurn();
-}
 function buyBuilding(name, price, rent) {
     if (money < price) { alert("잔액이 부족합니다!"); return; }
     money -= price; ownedBuildings.push({ name, rent });
@@ -466,4 +598,4 @@ requestAnimationFrame(update);
 </html>
 """
 
-components.html(game_html, height=660)
+components.html(game_html, height=720)
