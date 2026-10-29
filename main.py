@@ -3,41 +3,49 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="메이플 비치 자산관리 RPG", page_icon="🍁", layout="wide")
 
-st.title("🏙️ 모던 픽셀 비치 & 대화면 RPG")
-st.caption("방향키(A, D)로 이동, Space키로 점프! 포탈[▲ / W]로 들어가 직관적인 미니게임에 도전하세요.")
+st.title("🏙️ 메이플 비치 자산관리 RPG")
+st.caption("방향키(A, D / ◄, ►)로 이동, Space키(▲ 점프)로 점프! 포탈[▲ / W / 포탈 버튼]을 이용해 탐험하세요.")
 
 game_html = """
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
+<meta charset="UTF-8">
 <style>
     @import url('https://fonts.googleapis.com/css2?family=NeoDunggeunmo&display=swap');
 
+    * {
+        box-sizing: border-box;
+        user-select: none;
+    }
+
     body {
         margin: 0;
-        padding: 0;
+        padding: 10px;
         background-color: #0d111a;
         color: white;
         font-family: 'NeoDunggeunmo', 'Courier New', monospace;
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
     }
+
     #newsTickerBox {
         width: 840px;
         background: #1e293b;
         color: #f1c40f;
         font-size: 14px;
         font-weight: bold;
-        padding: 12px 18px;
+        padding: 10px 16px;
         border-radius: 12px 12px 0 0;
         border: 2px solid #3d5af1;
         border-bottom: none;
-        box-sizing: border-box;
         display: flex;
         align-items: center;
         gap: 10px;
     }
+
     #newsTag {
         background: #e74c3c;
         color: white;
@@ -46,31 +54,38 @@ game_html = """
         font-size: 12px;
         white-space: nowrap;
     }
+
     #newsText {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
+
     #gameContainer {
         position: relative;
+        width: 840px;
+        height: 480px;
     }
+
     canvas {
         border: 2px solid #3d5af1;
         border-radius: 0 0 14px 14px;
         background-color: #0b0e17;
         box-shadow: 0 12px 35px rgba(0,0,0,0.8);
         image-rendering: pixelated;
+        display: block;
     }
+
     #uiBox {
         width: 840px;
         background: #121824;
-        padding: 18px;
+        padding: 16px;
         border-radius: 12px;
         margin-top: 12px;
-        box-sizing: border-box;
         border: 2px solid #3d5af1;
         box-shadow: 0 6px 20px rgba(0,0,0,0.6);
     }
+
     .status-bar {
         display: flex;
         justify-content: space-between;
@@ -79,9 +94,10 @@ game_html = """
         color: #f1c40f;
         font-size: 15px;
     }
+
     #progressContainer {
         width: 100%;
-        height: 20px;
+        height: 22px;
         background: #1a2235;
         border-radius: 10px;
         position: relative;
@@ -89,12 +105,14 @@ game_html = """
         border: 1px solid #3d5af1;
         margin-bottom: 12px;
     }
+
     #progressBar {
         width: 1%;
         height: 100%;
         background: linear-gradient(90deg, #3d5af1, #00b894);
         transition: width 0.4s ease;
     }
+
     #progressText {
         position: absolute;
         width: 100%;
@@ -103,11 +121,12 @@ game_html = """
         left: 0;
         font-size: 12px;
         text-align: center;
-        line-height: 20px;
+        line-height: 22px;
         color: white;
         font-weight: bold;
         text-shadow: 0 1px 2px rgba(0,0,0,0.8);
     }
+
     .action-btn {
         background: linear-gradient(135deg, #3d5af1, #2e3e91);
         color: white;
@@ -117,12 +136,14 @@ game_html = """
         border-radius: 8px;
         cursor: pointer;
         font-family: 'NeoDunggeunmo', sans-serif;
-        font-size: 15px;
+        font-size: 14px;
         box-shadow: 0 4px 10px rgba(61,90,241,0.3);
     }
+
     .action-btn:hover {
         transform: translateY(-2px);
     }
+
     .enter-btn {
         background: linear-gradient(135deg, #00b894, #00896f);
         color: white;
@@ -131,9 +152,10 @@ game_html = """
         border-radius: 8px;
         cursor: pointer;
         font-family: 'NeoDunggeunmo', sans-serif;
-        font-size: 16px;
+        font-size: 15px;
         box-shadow: 0 4px 12px rgba(0,184,148,0.3);
     }
+
     .exit-btn {
         background: linear-gradient(135deg, #d63031, #a72828);
         color: white;
@@ -144,17 +166,19 @@ game_html = """
         font-family: 'NeoDunggeunmo', sans-serif;
         font-size: 14px;
     }
+
     .controls {
         display: grid;
         grid-template-columns: repeat(4, 90px);
         gap: 12px;
         justify-content: center;
-        margin-top: 14px;
+        margin-top: 12px;
     }
+
     .ctrl-btn {
         width: 90px;
-        height: 56px;
-        font-size: 18px;
+        height: 52px;
+        font-size: 16px;
         font-family: 'NeoDunggeunmo', sans-serif;
         background: #181f2c;
         color: #f1c40f;
@@ -163,20 +187,23 @@ game_html = """
         cursor: pointer;
         box-shadow: 0 4px 0 #283780;
     }
+
     .ctrl-btn:active {
         transform: translateY(2px);
         box-shadow: none;
     }
+
     #dialogue {
-        min-height: 52px;
+        min-height: 48px;
         background: #0d121c;
         padding: 12px;
         border-radius: 8px;
         border: 1px solid #283780;
         margin-top: 6px;
-        font-size: 15px;
+        font-size: 14px;
         line-height: 1.5;
     }
+
     #minigameBox {
         display: none;
         background: #0b0e17;
@@ -186,6 +213,7 @@ game_html = """
         margin-top: 10px;
         text-align: center;
     }
+
     #meterBar {
         width: 100%;
         height: 28px;
@@ -196,6 +224,7 @@ game_html = """
         margin: 12px 0;
         border: 1px solid #3d5af1;
     }
+
     #meterIndicator {
         width: 18px;
         height: 100%;
@@ -204,8 +233,9 @@ game_html = """
         left: 0;
         border-radius: 4px;
     }
+
     #targetZone {
-        width: 110px;
+        width: 120px;
         height: 100%;
         background: #00b894;
         position: absolute;
@@ -240,7 +270,7 @@ game_html = """
     <div id="dialogue">💬 방향키로 대형 스트리트 건물을 탐험하고 입구 포탈[▲ / W]을 이용해보세요.</div>
     
     <div id="minigameBox">
-        <div id="minigameTitle" style="color:#f1c40f; font-weight:bold; font-size: 16px;">🎯 타이밍 게이지 미니게임</div>
+        <div id="minigameTitle" style="color:#f1c40f; font-weight:bold; font-size: 15px;">🎯 타이밍 게이지 미니게임</div>
         <div id="meterBar">
             <div id="targetZone"></div>
             <div id="meterIndicator"></div>
@@ -267,6 +297,20 @@ let turn = 1;
 let currentScene = 'town';
 let ownedBuildings = [];
 const goalMoney = 100000000;
+
+// 머리 위 둥둥 떠오르는 텍스트 애니메이션 배열
+let floatingTexts = [];
+
+function addFloatingText(text, color, x, y) {
+    floatingTexts.push({
+        text: text,
+        color: color,
+        x: x,
+        y: y,
+        alpha: 1.0,
+        dy: -1.2
+    });
+}
 
 let currentNews = { text: "시티 금융 시장이 개장했습니다.", stockMod: 0, cryptoMod: 0 };
 const newsEvents = [
@@ -371,7 +415,7 @@ function checkProximity() {
     if (currentScene === 'town') {
         let nearB = buildings.find(b => Math.abs(player.x - b.portalX) < 55);
         if (nearB) {
-            dialogue.innerHTML = `✨ <b>[${nearB.name}] 입구입니다!</b> [▲ / W]키나 아래 버튼으로 입장하세요!`;
+            dialogue.innerHTML = `✨ <b>[${nearB.name}] 입구입니다!</b> [▲ / W]키나 포탈 버튼으로 입장하세요!`;
             actionArea.innerHTML = `<button class="enter-btn" onclick="enterBuilding('${nearB.id}')">🚪 건물 입장하기</button>`;
         } else {
             dialogue.innerHTML = "💬 방향키로 대형 건물을 탐험하고 입구 포탈로 들어가보세요!";
@@ -427,7 +471,7 @@ function startCryptoMiniGame() {
     document.getElementById('minigameBox').style.display = 'block';
     document.getElementById('minigameTitle').innerText = '🚀 [코인 미니게임] 고속 게이지 초록 타겟 적중 시 +200% 폭등!';
     meterPos = 0;
-    meterSpeed = 14;
+    meterSpeed = 15;
     meterActive = true;
     updateMeter();
 }
@@ -445,28 +489,28 @@ function stopMeter() {
     cancelAnimationFrame(meterAnimId);
     document.getElementById('minigameBox').style.display = 'none';
 
-    let success = meterPos >= 330 && meterPos <= 440;
+    let success = meterPos >= 330 && meterPos <= 450;
     
     if (currentScene === 'stock') {
         let winProb = 0.5 + currentNews.stockMod;
         if (success || Math.random() < winProb) {
             let profit = Math.floor(money * 0.4);
             money += profit;
-            alert(`🎉 [주식 대성공!] 타이밍 적중! +${profit.toLocaleString()}원 수익 달성!`);
+            addFloatingText(`+${profit.toLocaleString()}원`, '#00b894', player.x, player.y - 60);
         } else {
             let loss = Math.floor(money * 0.2);
             money -= loss;
-            alert(`📉 [주식 손실] 타이밍 실패... -${loss.toLocaleString()}원`);
+            addFloatingText(`-${loss.toLocaleString()}원`, '#ff7675', player.x, player.y - 60);
         }
     } else if (currentScene === 'crypto') {
         if (success) {
             let profit = Math.floor(money * 2.0);
             money += profit;
-            alert(`🚀 [코인 초대박!] 초록 타겟 정확히 저격! +${profit.toLocaleString()}원 대폭등!!`);
+            addFloatingText(`🚀 +${profit.toLocaleString()}원`, '#00b894', player.x, player.y - 60);
         } else {
             let loss = Math.floor(money * 0.5);
             money -= loss;
-            alert(`💥 [코인 청산] 타이밍 실패로 -${loss.toLocaleString()}원 손실...`);
+            addFloatingText(`💥 -${loss.toLocaleString()}원`, '#ff7675', player.x, player.y - 60);
         }
     }
     processTurn();
@@ -475,7 +519,10 @@ function stopMeter() {
 function processTurn() {
     let rentSum = 0;
     ownedBuildings.forEach(b => rentSum += b.rent);
-    money += rentSum;
+    if (rentSum > 0) {
+        money += rentSum;
+        addFloatingText(`🏢 월세 +${rentSum.toLocaleString()}원`, '#f1c40f', player.x, player.y - 80);
+    }
     turn += 1;
     
     if (Math.random() < 0.75) {
@@ -486,16 +533,24 @@ function processTurn() {
     document.getElementById('newsText').innerText = currentNews.text;
 
     updateUI();
-    if (money >= goalMoney) alert("🎉 1억 원 달성! 강남 건물주가 되었습니다!");
-    else if (turn > 12) alert("⏱ 12턴 종료! 최종 자산: " + money.toLocaleString() + "원");
-    else if (money <= 0) alert("💥 파산했습니다!");
 }
 
-function investBank() { money += Math.floor(money * 0.05); alert("🏦 예금 이자가 입금되었습니다!"); processTurn(); }
+function investBank() {
+    let profit = Math.floor(money * 0.05);
+    money += profit;
+    addFloatingText(`+${profit.toLocaleString()}원`, '#00b894', player.x, player.y - 60);
+    processTurn();
+}
+
 function buyBuilding(name, price, rent) {
-    if (money < price) { alert("자산이 부족합니다!"); return; }
-    money -= price; ownedBuildings.push({ name, rent });
-    alert(`🎉 [${name}] 매수 성공! 매 턴 월세가 들어옵니다.`); updateUI();
+    if (money < price) {
+        addFloatingText(`자산 부족!`, '#ff7675', player.x, player.y - 60);
+        return;
+    }
+    money -= price;
+    ownedBuildings.push({ name, rent });
+    addFloatingText(`-${price.toLocaleString()}원 (매수 완료)`, '#00b894', player.x, player.y - 60);
+    updateUI();
 }
 
 function updateUI() {
@@ -534,6 +589,16 @@ function update() {
     portalAnim += 0.08;
     player.animFrame += 0.15;
 
+    // 플로팅 텍스트 위치 및 투명도 업데이트
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        let ft = floatingTexts[i];
+        ft.y += ft.dy;
+        ft.alpha -= 0.015;
+        if (ft.alpha <= 0) {
+            floatingTexts.splice(i, 1);
+        }
+    }
+
     checkProximity();
     draw();
     requestAnimationFrame(update);
@@ -548,6 +613,20 @@ function draw() {
     else drawInterior();
 
     drawModernPlayer(player.x, player.y, player.facing);
+
+    // 머리 위 떠오르는 텍스트 애니메이션 렌더링
+    floatingTexts.forEach(ft => {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, ft.alpha);
+        ctx.fillStyle = ft.color;
+        ctx.font = 'bold 16px NeoDunggeunmo, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'black';
+        ctx.shadowBlur = 4;
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+    });
+
     ctx.restore();
 }
 
@@ -606,7 +685,6 @@ function drawTown() {
 }
 
 function drawInterior() {
-    let bObj = buildings.find(b => b.id === currentScene);
     let npc = interiorNPCs[currentScene];
 
     ctx.fillStyle = '#1e293b';
@@ -681,7 +759,10 @@ function drawModernNPC(x, y, name) {
     ctx.fillText(name, x, y - 44);
 }
 
-requestAnimationFrame(update);
+window.onload = function() {
+    updateUI();
+    requestAnimationFrame(update);
+};
 </script>
 </body>
 </html>
