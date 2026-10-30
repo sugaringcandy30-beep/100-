@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="메이플 비치 자산관리 RPG", page_icon="🍁", layout="wide")
 
 st.title("🏙️ 모던 벡터 시티 & 투자 RPG")
-st.caption("방향키(A, D)로 이동, Space키로 점프! 세련된 벡터 일러스트 스타일의 도시에서 자산을 키워보세요.")
+st.caption("방향키(A, D)로 이동, Space키로 점프! 미니게임을 진행할수록 점점 어려워지는 하이퍼 난이도 시스템!")
 
 game_html = """
 <!DOCTYPE html>
@@ -233,7 +233,7 @@ game_html = """
 
 <div id="newsTickerBox">
     <span id="newsTag">속보</span>
-    <span id="newsText">모던 벡터 시티 금융 시장이 개장했습니다. 각 빌딩을 방문해보세요!</span>
+    <span id="newsText">모던 벡터 시티 금융 시장이 개장했습니다. 미니게임 난이도는 플레이할수록 상승합니다!</span>
 </div>
 
 <div id="gameContainer">
@@ -243,7 +243,7 @@ game_html = """
 <div id="uiBox">
     <div class="status-bar">
         <span>📍 위치: <span id="locationText" style="color: #38bdf8;">메인 스트리트</span></span>
-        <span>👔 칭호: <span id="skinText" style="color: #38bdf8;">초보 개미</span></span>
+        <span>🔥 난이도 Lv.<span id="diffLevelText" style="color: #f43f5e;">1</span></span>
         <span>📅 턴: <span id="turnText">1</span>/12</span>
         <span>💰 자산: <span id="moneyText" style="color: #10b981;">1,000,000</span>원</span>
     </div>
@@ -283,6 +283,9 @@ let turn = 1;
 let currentScene = 'town';
 let ownedBuildings = [];
 const goalMoney = 100000000;
+
+// 미니게임 누적 플레이 횟수 및 난이도 계수
+let miniGameCount = 0;
 
 let floatingTexts = [];
 
@@ -327,6 +330,7 @@ let portalAnim = 0;
 let keys = {};
 
 let meterPos = 0;
+let baseMeterSpeed = 6;
 let meterSpeed = 6;
 let meterActive = false;
 let meterAnimId = null;
@@ -381,7 +385,7 @@ function enterBuilding(bId) {
     currentScene = bId;
     player.x = 120;
     player.y = 320;
-    lastProximityKey = null; // 구역 변경 시 상태 캐시 초기화
+    lastProximityKey = null;
     const bObj = buildings.find(b => b.id === bId);
     document.getElementById('locationText').innerText = bObj.name;
     checkProximity();
@@ -392,7 +396,7 @@ function exitBuilding() {
     currentScene = 'town';
     player.x = bObj.portalX;
     player.y = 320;
-    lastProximityKey = null; // 구역 변경 시 상태 캐시 초기화
+    lastProximityKey = null;
     document.getElementById('locationText').innerText = '메인 스트리트';
     document.getElementById('minigameBox').style.display = 'none';
     meterActive = false;
@@ -429,7 +433,8 @@ function checkProximity() {
                 dialogue.innerHTML = "🚪 메인 스트리트로 나가는 출구입니다.";
                 actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
             } else if (zone === 'npc') {
-                dialogue.innerHTML = `💬 <b>${npc.name}</b>: "어서오세요. 아래 버튼을 눌러 투자 미니게임을 시작할 수 있습니다."`;
+                let currentLevel = miniGameCount + 1;
+                dialogue.innerHTML = `💬 <b>${npc.name}</b>: "어서오세요! (현재 난이도 Lv.${currentLevel}) 아래 버튼을 눌러 도전하세요."`;
                 renderDialogueOptions(currentScene);
             } else {
                 dialogue.innerHTML = `🏢 컨설팅 데스크로 가까이 다가가세요.`;
@@ -460,9 +465,16 @@ function renderDialogueOptions(type) {
 function startStockMiniGame() {
     document.getElementById('actionArea').innerHTML = '';
     document.getElementById('minigameBox').style.display = 'block';
-    document.getElementById('minigameTitle').innerText = '📈 [증권 미니게임] 게이지가 초록 영역에 올 때 STOP을 누르세요!';
+    
+    // 난이도 반영: 미니게임을 할수록 속도가 빨라지고 타겟 영역이 좁아짐 (최소 폭 40px까지 축소)
+    let speedBonus = miniGameCount * 1.5;
+    let targetWidth = Math.max(40, 110 - (miniGameCount * 12));
+    
+    document.getElementById('targetZone').style.width = targetWidth + 'px';
+    document.getElementById('minigameTitle').innerText = `📈 [주식 미니게임 Lv.${miniGameCount + 1}] 초록 영역 적중 시 성공!`;
+    
     meterPos = 0;
-    meterSpeed = 8;
+    meterSpeed = 7 + speedBonus;
     meterActive = true;
     updateMeter();
 }
@@ -470,9 +482,15 @@ function startStockMiniGame() {
 function startCryptoMiniGame() {
     document.getElementById('actionArea').innerHTML = '';
     document.getElementById('minigameBox').style.display = 'block';
-    document.getElementById('minigameTitle').innerText = '🚀 [코인 미니게임] 고속 게이지 초록 타겟 적중 시 +200% 폭등!';
+    
+    let speedBonus = miniGameCount * 2.2;
+    let targetWidth = Math.max(35, 100 - (miniGameCount * 14));
+    
+    document.getElementById('targetZone').style.width = targetWidth + 'px';
+    document.getElementById('minigameTitle').innerText = `🚀 [코인 미니게임 Lv.${miniGameCount + 1}] 고속 게이지 폭등 도전!`;
+    
     meterPos = 0;
-    meterSpeed = 14;
+    meterSpeed = 12 + speedBonus;
     meterActive = true;
     updateMeter();
 }
@@ -490,7 +508,13 @@ function stopMeter() {
     cancelAnimationFrame(meterAnimId);
     document.getElementById('minigameBox').style.display = 'none';
 
-    let success = meterPos >= 330 && meterPos <= 440;
+    // 현재 설정된 타겟 영역의 위치와 너비를 기준으로 판정
+    let targetZoneEl = document.getElementById('targetZone');
+    let targetLeft = parseFloat(targetZoneEl.style.left) || 330;
+    let targetWidth = parseFloat(targetZoneEl.style.width) || 110;
+    let indicatorPos = meterPos + 9; // 인디케이터 중심점 보정
+
+    let success = indicatorPos >= targetLeft && indicatorPos <= (targetLeft + targetWidth);
     
     if (currentScene === 'stock') {
         let winProb = 0.5 + currentNews.stockMod;
@@ -498,7 +522,7 @@ function stopMeter() {
             let profit = Math.floor(money * 0.4);
             money += profit;
             addFloatingText(profit);
-            alert(`🎉 [주식 대성공!] 타이밍 적중! +${profit.toLocaleString()}원 수익 달성!`);
+            alert(`🎉 [주식 대성공 (Lv.${miniGameCount + 1})] 타이밍 적중! +${profit.toLocaleString()}원 수익!`);
         } else {
             let loss = Math.floor(money * 0.2);
             money -= loss;
@@ -510,7 +534,7 @@ function stopMeter() {
             let profit = Math.floor(money * 2.0);
             money += profit;
             addFloatingText(profit);
-            alert(`🚀 [코인 초대박!] 초록 타겟 정확히 저격! +${profit.toLocaleString()}원 대폭등!!`);
+            alert(`🚀 [코인 초대박 (Lv.${miniGameCount + 1})] 초록 타겟 정확히 저격! +${profit.toLocaleString()}원 폭등!!`);
         } else {
             let loss = Math.floor(money * 0.5);
             money -= loss;
@@ -518,6 +542,11 @@ function stopMeter() {
             alert(`💥 [코인 청산] 타이밍 실패로 -${loss.toLocaleString()}원 손실...`);
         }
     }
+
+    // 미니게임 완료 후 난이도 단계 상승
+    miniGameCount += 1;
+    document.getElementById('diffLevelText').innerText = miniGameCount + 1;
+
     processTurn();
 }
 
@@ -538,7 +567,7 @@ function processTurn() {
     document.getElementById('newsText').innerText = currentNews.text;
 
     updateUI();
-    lastProximityKey = null; // 턴 변경 후 버튼 상태 갱신 허용
+    lastProximityKey = null;
 
     if (money >= goalMoney) alert("🎉 1억 원 달성! 강남 건물주가 되었습니다!");
     else if (turn > 12) alert("⏱ 12턴 종료! 최종 자산: " + money.toLocaleString() + "원");
