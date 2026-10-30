@@ -11,7 +11,7 @@ game_html = """
 <html>
 <head>
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
+    @import url('[https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap](https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap)');
 
     body {
         margin: 0;
@@ -583,4 +583,238 @@ function update() {
     }
 
     if (currentScene === 'town') {
-        player.x = Math.max(20
+        player.x = Math.max(20, Math.min(1580, player.x));
+        cameraX = player.x - canvas.width / 2;
+        cameraX = Math.max(0, Math.min(1600 - canvas.width, cameraX));
+    } else {
+        player.x = Math.max(20, Math.min(820, player.x));
+        cameraX = 0;
+    }
+
+    portalAnim += 0.08;
+    player.animFrame += 0.15;
+
+    checkProximity();
+    draw();
+    requestAnimationFrame(update);
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(-cameraX, 0);
+
+    if (currentScene === 'town') drawTown();
+    else drawInterior();
+
+    drawVectorPlayer(player.x, player.y, player.facing);
+    drawFloatingTexts();
+
+    ctx.restore();
+}
+
+function drawTown() {
+    let skyGradient = ctx.createLinearGradient(0, 0, 0, 260);
+    skyGradient.addColorStop(0, '#090d16');
+    skyGradient.addColorStop(1, '#1e293b');
+    ctx.fillStyle = skyGradient;
+    ctx.fillRect(cameraX, 0, canvas.width, 260);
+
+    ctx.fillStyle = 'rgba(30, 41, 59, 0.4)';
+    ctx.fillRect(cameraX + 50, 100, 90, 160);
+    ctx.fillRect(cameraX + 300, 70, 110, 190);
+    ctx.fillRect(cameraX + 700, 80, 100, 180);
+    ctx.fillRect(cameraX + 1100, 50, 130, 210);
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 360, 1600, 120);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, 360, 1600, 6);
+
+    buildings.forEach(b => {
+        ctx.fillStyle = b.colorMain;
+        ctx.fillRect(b.x, 110, 200, 250);
+
+        for (let wx = b.x + 20; wx < b.x + 180; wx += 40) {
+            for (let wy = 140; wy < 320; wy += 45) {
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
+                ctx.fillRect(wx, wy, 22, 28);
+                ctx.fillStyle = 'rgba(251, 191, 36, 0.8)';
+                ctx.fillRect(wx + 4, wy + 4, 14, 20);
+            }
+        }
+
+        ctx.fillStyle = b.accent;
+        ctx.fillRect(b.x, 80, 200, 32);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '600 15px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(b.name, b.x + 100, 101);
+
+        let px = b.portalX;
+        let py = 320;
+        let scale = Math.sin(portalAnim) * 6;
+        
+        ctx.save();
+        ctx.strokeStyle = b.accent;
+        ctx.lineWidth = 4;
+        ctx.shadowColor = b.accent;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.ellipse(px, py, 22 + scale, 40 + scale, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = b.accent;
+        ctx.globalAlpha = 0.25;
+        ctx.fill();
+        ctx.restore();
+    });
+}
+
+function drawInterior() {
+    let bObj = buildings.find(b => b.id === currentScene);
+    let npc = interiorNPCs[currentScene];
+
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 0, 840, 480);
+    
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, 840, 90);
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 360, 840, 120);
+
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(340, 300, 160, 60);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(340, 350, 160, 10);
+
+    ctx.save();
+    ctx.strokeStyle = '#f43f5e';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = '#f43f5e';
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.ellipse(40, 320, 18, 36, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    drawVectorNPC(npc.x, npc.y, npc.name);
+}
+
+function drawVectorPlayer(x, y, facing) {
+    let bounce = Math.sin(player.animFrame) * 2;
+    if (!player.isGrounded) bounce = -6;
+
+    if (money >= 50000000) {
+        ctx.save();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#fbbf24';
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(x, y - 18 + bounce, 32, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.roundRect(x - 14, y - 42 + bounce, 28, 48, [10]);
+    ctx.fill();
+
+    ctx.fillStyle = '#fce7f3';
+    ctx.beginPath();
+    ctx.roundRect(x - 10, y - 30 + bounce, 20, 16, [6]);
+    ctx.fill();
+
+    if (money >= 50000000) {
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(x - 12, y - 38 + bounce, 24, 10);
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillRect(x - 2, y - 14 + bounce, 4, 16);
+    } else if (money >= 20000000) {
+        ctx.fillStyle = '#a855f7';
+        ctx.fillRect(x - 12, y - 38 + bounce, 24, 10);
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(x - 2, y - 14 + bounce, 4, 16);
+    } else {
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(x - 12, y - 38 + bounce, 24, 10);
+        ctx.fillStyle = '#38bdf8';
+        if (facing === 'right') {
+            ctx.fillRect(x + 2, y - 14 + bounce, 6, 16);
+        } else {
+            ctx.fillRect(x - 8, y - 14 + bounce, 6, 16);
+        }
+    }
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.beginPath();
+    ctx.roundRect(x - 45, y - 62 + bounce, 90, 20, [6]);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
+    ctx.stroke();
+
+    ctx.fillStyle = money >= 50000000 ? '#fbbf24' : '#38bdf8';
+    ctx.font = '600 12px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(player.name, x, y - 48 + bounce);
+}
+
+function drawFloatingTexts() {
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        let ft = floatingTexts[i];
+        ft.y += ft.vy;
+        ft.opacity -= 0.02;
+
+        if (ft.opacity <= 0) {
+            floatingTexts.splice(i, 1);
+            continue;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, ft.opacity);
+        ctx.fillStyle = ft.color;
+        ctx.font = '700 16px Pretendard, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 6;
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+    }
+}
+
+function drawVectorNPC(x, y, name) {
+    ctx.fillStyle = '#0f172a';
+    ctx.beginPath();
+    ctx.roundRect(x - 14, y - 42, 28, 48, [10]);
+    ctx.fill();
+
+    ctx.fillStyle = '#fce7f3';
+    ctx.beginPath();
+    ctx.roundRect(x - 10, y - 30, 20, 16, [6]);
+    ctx.fill();
+
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(x - 12, y - 38, 24, 10);
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.beginPath();
+    ctx.roundRect(x - 55, y - 62, 110, 20, [6]);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.3)';
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '600 12px Pretendard, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(name, x, y - 48);
+}
+
+requestAnimationFrame(update);
+</script>
+</body>
+</html>
+"""
+
+components.html(game_html, height=920)
