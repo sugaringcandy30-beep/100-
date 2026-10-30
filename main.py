@@ -11,7 +11,7 @@ game_html = """
 <html>
 <head>
 <style>
-    @import url('[https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap](https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap)');
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700&display=swap');
 
     body {
         margin: 0;
@@ -331,6 +331,8 @@ let meterSpeed = 6;
 let meterActive = false;
 let meterAnimId = null;
 
+let lastProximityKey = null;
+
 document.addEventListener('keydown', (e) => {
     keys[e.key] = true;
     if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') && currentScene === 'town') {
@@ -379,6 +381,7 @@ function enterBuilding(bId) {
     currentScene = bId;
     player.x = 120;
     player.y = 320;
+    lastProximityKey = null; // 구역 변경 시 상태 캐시 초기화
     const bObj = buildings.find(b => b.id === bId);
     document.getElementById('locationText').innerText = bObj.name;
     checkProximity();
@@ -389,6 +392,7 @@ function exitBuilding() {
     currentScene = 'town';
     player.x = bObj.portalX;
     player.y = 320;
+    lastProximityKey = null; // 구역 변경 시 상태 캐시 초기화
     document.getElementById('locationText').innerText = '메인 스트리트';
     document.getElementById('minigameBox').style.display = 'none';
     meterActive = false;
@@ -401,26 +405,36 @@ function checkProximity() {
 
     if (currentScene === 'town') {
         let nearB = buildings.find(b => Math.abs(player.x - b.portalX) < 55);
-        if (nearB) {
-            dialogue.innerHTML = `✨ <b>[${nearB.name}] 입구입니다!</b> [▲ / W]키나 아래 버튼으로 입장하세요!`;
-            actionArea.innerHTML = `<button class="enter-btn" onclick="enterBuilding('${nearB.id}')">🚪 건물 입장하기</button>`;
-        } else {
-            dialogue.innerHTML = "💬 방향키로 벡터 빌딩들을 탐험하고 입구 포탈로 들어가보세요!";
-            actionArea.innerHTML = "";
+        let stateKey = nearB ? 'town_' + nearB.id : 'town_none';
+
+        if (lastProximityKey !== stateKey) {
+            lastProximityKey = stateKey;
+            if (nearB) {
+                dialogue.innerHTML = `✨ <b>[${nearB.name}] 입구입니다!</b> [▲ / W]키나 아래 버튼으로 입장하세요!`;
+                actionArea.innerHTML = `<button class="enter-btn" onclick="enterBuilding('${nearB.id}')">🚪 건물 입장하기</button>`;
+            } else {
+                dialogue.innerHTML = "💬 방향키로 세련된 벡터 빌딩들을 탐험하고 입구 포탈로 들어가보세요!";
+                actionArea.innerHTML = "";
+            }
         }
     } else {
         let npc = interiorNPCs[currentScene];
         let dist = Math.abs(player.x - npc.x);
-        
-        if (player.x < 70) {
-            dialogue.innerHTML = "🚪 메인 스트리트로 나가는 출구입니다.";
-            actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
-        } else if (dist < 100) {
-            dialogue.innerHTML = `💬 <b>${npc.name}</b>: "어서오세요. 아래 버튼을 눌러 투자 미니게임을 시작할 수 있습니다."`;
-            renderDialogueOptions(currentScene);
-        } else {
-            dialogue.innerHTML = `🏢 컨설팅 데스크로 가까이 다가가세요.`;
-            actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
+        let zone = player.x < 70 ? 'exit' : (dist < 100 ? 'npc' : 'walk');
+        let stateKey = currentScene + '_' + zone;
+
+        if (lastProximityKey !== stateKey) {
+            lastProximityKey = stateKey;
+            if (zone === 'exit') {
+                dialogue.innerHTML = "🚪 메인 스트리트로 나가는 출구입니다.";
+                actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
+            } else if (zone === 'npc') {
+                dialogue.innerHTML = `💬 <b>${npc.name}</b>: "어서오세요. 아래 버튼을 눌러 투자 미니게임을 시작할 수 있습니다."`;
+                renderDialogueOptions(currentScene);
+            } else {
+                dialogue.innerHTML = `🏢 컨설팅 데스크로 가까이 다가가세요.`;
+                actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
+            }
         }
     }
 }
@@ -524,6 +538,8 @@ function processTurn() {
     document.getElementById('newsText').innerText = currentNews.text;
 
     updateUI();
+    lastProximityKey = null; // 턴 변경 후 버튼 상태 갱신 허용
+
     if (money >= goalMoney) alert("🎉 1억 원 달성! 강남 건물주가 되었습니다!");
     else if (turn > 12) alert("⏱ 12턴 종료! 최종 자산: " + money.toLocaleString() + "원");
     else if (money <= 0) alert("💥 파산했습니다!");
