@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="메이플 비치 자산관리 RPG", page_icon="🍁", layout="wide")
 
 st.title("🏙️ 모던 벡터 시티 & 투자 RPG")
-st.caption("방향키(A, D)로 이동, Space키로 점프! 12턴 안에 1억 원을 모아 강남 건물주가 되어보세요.")
+st.caption("방향키(A, D)로 이동, Space키로 점프! 코인 미니게임이 극단적인 대폭 하락 및 상승을 오가도록 수정되었습니다.")
 
 game_html = """
 <!DOCTYPE html>
@@ -25,12 +25,12 @@ game_html = """
     }
     #newsTickerBox {
         width: 840px;
-        background: rgba(30, 41, 59, 0.7);
+        background: rgba(30, 41, 59, 0.75);
         backdrop-filter: blur(10px);
         color: #38bdf8;
         font-size: 14px;
         font-weight: 600;
-        padding: 12px 20px;
+        padding: 10px 18px;
         border-radius: 16px 16px 0 0;
         border: 1px solid rgba(56, 189, 248, 0.3);
         border-bottom: none;
@@ -68,9 +68,9 @@ game_html = """
         width: 840px;
         background: rgba(15, 23, 42, 0.85);
         backdrop-filter: blur(12px);
-        padding: 20px;
+        padding: 16px 20px;
         border-radius: 16px;
-        margin-top: 14px;
+        margin-top: 12px;
         box-sizing: border-box;
         border: 1px solid rgba(56, 189, 248, 0.25);
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -78,20 +78,20 @@ game_html = """
     .status-bar {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         font-weight: 600;
         color: #e2e8f0;
-        font-size: 15px;
+        font-size: 14px;
     }
     #progressContainer {
         width: 100%;
-        height: 22px;
+        height: 20px;
         background: rgba(30, 41, 59, 0.8);
-        border-radius: 11px;
+        border-radius: 10px;
         position: relative;
         overflow: hidden;
         border: 1px solid rgba(56, 189, 248, 0.2);
-        margin-bottom: 14px;
+        margin-bottom: 10px;
     }
     #progressBar {
         width: 1%;
@@ -106,9 +106,9 @@ game_html = """
         height: 100%;
         top: 0;
         left: 0;
-        font-size: 12px;
+        font-size: 11px;
         text-align: center;
-        line-height: 22px;
+        line-height: 20px;
         color: white;
         font-weight: 600;
         text-shadow: 0 1px 2px rgba(0,0,0,0.6);
@@ -117,71 +117,81 @@ game_html = """
         background: linear-gradient(135deg, #3b82f6, #1d4ed8);
         color: white;
         border: none;
-        padding: 11px 20px;
-        margin: 4px;
-        border-radius: 10px;
+        padding: 5px 10px;
+        margin: 2px;
+        border-radius: 6px;
         cursor: pointer;
         font-family: 'Pretendard', sans-serif;
-        font-size: 15px;
+        font-size: 12px;
         font-weight: 600;
-        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
-        transition: all 0.2s ease;
+        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+        transition: all 0.15s ease;
     }
     .action-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(59, 130, 246, 0.6);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(59, 130, 246, 0.6);
+    }
+    .sell-btn {
+        background: linear-gradient(135deg, #f43f5e, #e11d48);
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        margin: 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: 'Pretendard', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        box-shadow: 0 2px 6px rgba(244, 63, 94, 0.4);
     }
     .enter-btn {
         background: linear-gradient(135deg, #10b981, #059669);
         color: white;
         border: none;
-        padding: 12px 26px;
+        padding: 10px 22px;
         border-radius: 10px;
         cursor: pointer;
         font-family: 'Pretendard', sans-serif;
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 600;
         box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
     }
     .exit-btn {
-        background: linear-gradient(135deg, #f43f5e, #e11d48);
+        background: linear-gradient(135deg, #64748b, #475569);
         color: white;
         border: none;
-        padding: 10px 20px;
-        border-radius: 10px;
+        padding: 8px 16px;
+        margin: 4px;
+        border-radius: 8px;
         cursor: pointer;
         font-family: 'Pretendard', sans-serif;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
-        box-shadow: 0 4px 14px rgba(244, 63, 94, 0.4);
     }
     .restart-btn {
         background: linear-gradient(135deg, #f59e0b, #d97706);
         color: white;
         border: none;
-        padding: 14px 36px;
-        border-radius: 12px;
+        padding: 12px 30px;
+        border-radius: 10px;
         cursor: pointer;
         font-family: 'Pretendard', sans-serif;
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 700;
         box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
         transition: all 0.2s ease;
-    }
-    .restart-btn:hover {
-        transform: scale(1.05);
     }
     .controls {
         display: grid;
         grid-template-columns: repeat(4, 90px);
         gap: 12px;
         justify-content: center;
-        margin-top: 16px;
+        margin-top: 14px;
     }
     .ctrl-btn {
         width: 90px;
-        height: 56px;
-        font-size: 16px;
+        height: 50px;
+        font-size: 15px;
         font-weight: 600;
         font-family: 'Pretendard', sans-serif;
         background: rgba(30, 41, 59, 0.9);
@@ -197,60 +207,53 @@ game_html = """
         background: rgba(56, 189, 248, 0.2);
     }
     #dialogue {
-        min-height: 52px;
+        min-height: 40px;
         background: rgba(15, 23, 42, 0.6);
-        padding: 14px;
-        border-radius: 12px;
+        padding: 10px 14px;
+        border-radius: 10px;
         border: 1px solid rgba(56, 189, 248, 0.15);
-        margin-top: 8px;
-        font-size: 15px;
-        line-height: 1.6;
+        margin-top: 6px;
+        font-size: 14px;
+        line-height: 1.5;
         color: #cbd5e1;
     }
-    #minigameBox {
-        display: none;
-        background: rgba(15, 23, 42, 0.9);
-        border: 1px solid rgba(245, 158, 11, 0.5);
-        border-radius: 12px;
-        padding: 18px;
-        margin-top: 12px;
-        text-align: center;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-    #meterBar {
-        width: 100%;
-        height: 28px;
-        background: rgba(30, 41, 59, 0.8);
-        border-radius: 14px;
-        position: relative;
-        overflow: hidden;
-        margin: 14px 0;
-        border: 1px solid rgba(56, 189, 248, 0.3);
-    }
-    #meterIndicator {
-        width: 18px;
-        height: 100%;
-        background: #f43f5e;
-        position: absolute;
-        left: 0;
+    .stock-card {
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(56, 189, 248, 0.2);
         border-radius: 8px;
-        box-shadow: 0 0 10px #f43f5e;
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
-    #targetZone {
-        width: 110px;
-        height: 100%;
-        background: rgba(16, 185, 129, 0.7);
-        position: absolute;
-        left: 330px;
-        border-radius: 6px;
+    .stock-input {
+        width: 50px;
+        background: #0f172a;
+        border: 1px solid rgba(56, 189, 248, 0.4);
+        color: white;
+        text-align: center;
+        border-radius: 4px;
+        padding: 3px;
+        font-size: 12px;
+    }
+    .news-item {
+        background: rgba(30, 41, 59, 0.5);
+        border-left: 3px solid #38bdf8;
+        padding: 6px 10px;
+        margin-bottom: 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        text-align: left;
+        color: #e2e8f0;
     }
 </style>
 </head>
 <body>
 
 <div id="newsTickerBox">
-    <span id="newsTag">속보</span>
-    <span id="newsText">모던 벡터 시티 금융 시장이 개장했습니다. 12턴 안에 1억 원을 달성하세요!</span>
+    <span id="newsTag">실시간 속보</span>
+    <span id="newsText">모던 벡터 시티 금융 시장이 개장했습니다. 증권타워에서 주식을 매매하고 하룻밤을 보내세요!</span>
 </div>
 
 <div id="gameContainer">
@@ -260,9 +263,9 @@ game_html = """
 <div id="uiBox">
     <div class="status-bar">
         <span>📍 위치: <span id="locationText" style="color: #38bdf8;">메인 스트리트</span></span>
-        <span>🔥 난이도 Lv.<span id="diffLevelText" style="color: #f43f5e;">1</span></span>
+        <span>☀️ 시간대: <span id="dayNightText" style="color: #fbbf24;">아침 🌅</span></span>
         <span>📅 턴: <span id="turnText">1</span>/12</span>
-        <span>💰 자산: <span id="moneyText" style="color: #10b981;">1,000,000</span>원</span>
+        <span>💰 총 자산: <span id="moneyText" style="color: #10b981;">1,000,000</span>원 (현금: <span id="cashText" style="color: #38bdf8;">1,000,000</span>원)</span>
     </div>
 
     <div id="progressContainer">
@@ -271,17 +274,7 @@ game_html = """
     </div>
 
     <div id="dialogue">💬 방향키로 세련된 벡터 빌딩들을 탐험하고 입구 포탈[▲ / W]로 입장해보세요.</div>
-   
-    <div id="minigameBox">
-        <div id="minigameTitle" style="color:#fbbf24; font-weight:700; font-size: 16px;">🎯 타이밍 게이지 미니게임</div>
-        <div id="meterBar">
-            <div id="targetZone"></div>
-            <div id="meterIndicator"></div>
-        </div>
-        <button class="action-btn" style="background: linear-gradient(135deg, #f43f5e, #e11d48);" onclick="stopMeter()">🎯 STOP (타이밍 맞추기)</button>
-    </div>
-
-    <div id="actionArea" style="margin-top: 10px; text-align: center;"></div>
+    <div id="actionArea" style="margin-top: 8px; text-align: center;"></div>
 </div>
 
 <div class="controls">
@@ -299,23 +292,36 @@ window.addEventListener('load', () => {
     canvas.focus();
 });
 
-let money = 1000000;
+let cash = 1000000;
 let turn = 1;
+let isDay = true;
 let currentScene = 'town';
 let ownedBuildings = [];
 const goalMoney = 100000000;
 let isGameOver = false;
 let gameResult = '';
 
-let miniGameCount = 0;
-let floatingTexts = [];
+let stocks = [
+    { id: 'neotech', name: '🚀 네오 테크', price: 45000, prevPrice: 45000, owned: 0, totalCost: 0, volatility: 0.32 },
+    { id: 'bluechips', name: '🛡️ 블루 칩스', price: 120000, prevPrice: 120000, owned: 0, totalCost: 0, volatility: 0.08 },
+    { id: 'cyberenergy', name: '⚡ 사이버 에너지', price: 18000, prevPrice: 18000, owned: 0, totalCost: 0, volatility: 0.24 },
+    { id: 'biocore', name: '🧬 바이오 코어', price: 32000, prevPrice: 32000, owned: 0, totalCost: 0, volatility: 0.40 },
+    { id: 'pixelgame', name: '🎮 픽셀 게임즈', price: 15000, prevPrice: 15000, owned: 0, totalCost: 0, volatility: 0.28 },
+    { id: 'quantumsem', name: '💻 퀀텀 반도체', price: 75000, prevPrice: 75000, owned: 0, totalCost: 0, volatility: 0.18 }
+];
 
-let currentNews = { text: "시티 금융 시장이 개장했습니다.", stockMod: 0, cryptoMod: 0 };
+let floatingTexts = [];
+let newsArchive = [
+    "[턴 1] 모던 벡터 시티 증권 시장에 6개 우량 및 성장 섹터가 동시 상장되었습니다."
+];
+
+let currentNews = { text: "모던 벡터 시티 증권 시장에 6개 우량 및 성장 섹터가 동시 상장되었습니다.", stockMod: 0 };
+
 const newsEvents = [
-    { text: "🔥 [속보] 혁신 기술 기업 대형 호재 발생! 주식 시장 강세!", stockMod: 0.4, cryptoMod: 0 },
-    { text: "📉 [속보] 글로벌 자산 규제 강화 발표! 코인 시장 위축 주의!", stockMod: 0, cryptoMod: -0.3 },
-    { text: "🚀 [속보] 중앙은행 대규모 유동성 공급! 전 시장 동반 폭등!", stockMod: 0.25, cryptoMod: 0.3 },
-    { text: "⚠️ [속보] 금리 인상 이슈 대두! 투자 심리 경계감 확산!", stockMod: -0.2, cryptoMod: -0.2 }
+    { text: "🔥 [특보] 차세대 기술 혁신 펀드 유입으로 성장 테크 및 반도체 섹터의 강한 상승세가 예상됩니다.", stockMod: 0.26 },
+    { text: "📉 [긴급] 글로벌 원자재 공급망 차질 우려... 방어주와 에너지 중심으로 리스크 관리가 필요합니다.", stockMod: -0.20 },
+    { text: "🚀 [속보] 확장적 통화 정책 시행 임박... 전반적인 증시 유동성 랠리가 기대됩니다.", stockMod: 0.30 },
+    { text: "⚠️ [경고] 금리 인상 기조 장기화 우려로 투자 심리가 위축되며 변동성이 확대될 전망입니다.", stockMod: -0.16 }
 ];
 
 const player = {
@@ -349,13 +355,12 @@ const interiorNPCs = {
 let cameraX = 0;
 let portalAnim = 0;
 let keys = {};
-
-let meterPos = 0;
-let meterSpeed = 6;
-let meterActive = false;
-let meterAnimId = null;
-
 let lastProximityKey = null;
+
+// 코인 0.1초 단위 상하 폭등/폭락 미니게임 상태 변수
+let isCryptoGameActive = false;
+let cryptoMultiplier = 1.0;
+let cryptoGameInterval = null;
 
 document.addEventListener('keydown', (e) => {
     if (isGameOver) return;
@@ -363,37 +368,63 @@ document.addEventListener('keydown', (e) => {
         e.preventDefault();
     }
     keys[e.key] = true;
+   
+    // 코인 미니게임 중 스페이스바를 누르면 매도/확정!
+    if ((e.key === ' ' || e.key === 'Spacebar') && isCryptoGameActive) {
+        stopCryptoMinigame();
+        return;
+    }
+
     if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') && currentScene === 'town') {
         interactPortal();
     }
-    if ((e.key === ' ' || e.key === 'Spacebar') && player.isGrounded) {
+    if ((e.key === ' ' || e.key === 'Spacebar') && player.isGrounded && !isCryptoGameActive) {
         jump();
     }
 });
 document.addEventListener('keyup', (e) => { keys[e.key] = false; });
 
-function moveLeft() { if (!isGameOver) { player.vx = -player.speed; player.facing = 'left'; } }
-function moveRight() { if (!isGameOver) { player.vx = player.speed; player.facing = 'right'; } }
+function moveLeft() { if (!isGameOver && !isCryptoGameActive) { player.vx = -player.speed; player.facing = 'left'; } }
+function moveRight() { if (!isGameOver && !isCryptoGameActive) { player.vx = player.speed; player.facing = 'right'; } }
 function jump() {
-    if (!isGameOver && player.isGrounded) {
+    if (!isGameOver && player.isGrounded && !isCryptoGameActive) {
         player.vy = player.jumpPower;
         player.isGrounded = false;
     }
 }
 
+function getTotalAssets() {
+    let stockValue = stocks.reduce((sum, s) => sum + (s.owned * s.price), 0);
+    return cash + stockValue;
+}
+
 function restartGame() {
-    money = 1000000;
+    cash = 1000000;
     turn = 1;
+    isDay = true;
     currentScene = 'town';
     ownedBuildings = [];
-    miniGameCount = 0;
     isGameOver = false;
     gameResult = '';
+    isCryptoGameActive = false;
+    if (cryptoGameInterval) clearInterval(cryptoGameInterval);
     floatingTexts = [];
+    newsArchive = ["[턴 1] 모던 벡터 시티 증권 시장에 6개 우량 및 성장 섹터가 동시 상장되었습니다."];
+    currentNews = { text: "모던 벡터 시티 증권 시장에 6개 우량 및 성장 섹터가 동시 상장되었습니다.", stockMod: 0 };
+   
+    stocks.forEach(s => {
+        s.owned = 0;
+        s.totalCost = 0;
+    });
+    stocks[0].price = 45000; stocks[0].prevPrice = 45000;
+    stocks[1].price = 120000; stocks[1].prevPrice = 120000;
+    stocks[2].price = 18000; stocks[2].prevPrice = 18000;
+    stocks[3].price = 32000; stocks[3].prevPrice = 32000;
+    stocks[4].price = 15000; stocks[4].prevPrice = 15000;
+    stocks[5].price = 75000; stocks[5].prevPrice = 75000;
+
     player.x = 120;
     player.y = 320;
-    document.getElementById('minigameBox').style.display = 'none';
-    document.getElementById('diffLevelText').innerText = '1';
     document.getElementById('locationText').innerText = '메인 스트리트';
     lastProximityKey = null;
     updateUI();
@@ -438,14 +469,16 @@ function enterBuilding(bId) {
 
 function exitBuilding() {
     if (isGameOver) return;
+    if (isCryptoGameActive) {
+        isCryptoGameActive = false;
+        if (cryptoGameInterval) clearInterval(cryptoGameInterval);
+    }
     let bObj = buildings.find(b => b.id === currentScene);
     currentScene = 'town';
     player.x = bObj.portalX;
     player.y = 320;
     lastProximityKey = null;
     document.getElementById('locationText').innerText = '메인 스트리트';
-    document.getElementById('minigameBox').style.display = 'none';
-    meterActive = false;
     canvas.focus();
     checkProximity();
 }
@@ -453,6 +486,8 @@ function exitBuilding() {
 function triggerGameOver(result) {
     isGameOver = true;
     gameResult = result;
+    isCryptoGameActive = false;
+    if (cryptoGameInterval) clearInterval(cryptoGameInterval);
     const actionArea = document.getElementById('actionArea');
     const dialogue = document.getElementById('dialogue');
    
@@ -499,8 +534,7 @@ function checkProximity() {
                 dialogue.innerHTML = "🚪 메인 스트리트로 나가는 출구입니다.";
                 actionArea.innerHTML = `<button class="exit-btn" onclick="exitBuilding()">🚪 밖으로 나가기</button>`;
             } else if (zone === 'npc') {
-                let currentLevel = miniGameCount + 1;
-                dialogue.innerHTML = `💬 <b>${npc.name}</b>: "어서오세요! (현재 난이도 Lv.${currentLevel}) 아래 버튼을 눌러 도전하세요."`;
+                dialogue.innerHTML = `💬 <b>${npc.name}</b>: "어서오세요! 원하시는 서비스를 선택해 주세요."`;
                 renderDialogueOptions(currentScene);
             } else {
                 dialogue.innerHTML = `🏢 컨설팅 데스크로 가까이 다가가세요.`;
@@ -513,144 +547,265 @@ function checkProximity() {
 function renderDialogueOptions(type) {
     const actionArea = document.getElementById('actionArea');
     if (type === 'bank') {
-        actionArea.innerHTML = `<button class="action-btn" onclick="investBank()">🏦 예금 가입 (+5% 확정)</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
+        actionArea.innerHTML = `<button class="action-btn" onclick="investBank()">🏦 예금 가입 (+5% 확정 수익 & 턴 진행)</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
     } else if (type === 'stock') {
-        actionArea.innerHTML = `<button class="action-btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="startStockMiniGame()">🎮 [미니게임] 주식 매수 타이밍 도전</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
+        renderStockMarketUI();
     } else if (type === 'crypto') {
-        actionArea.innerHTML = `<button class="action-btn" style="background: linear-gradient(135deg, #f43f5e, #e11d48);" onclick="startCryptoMiniGame()">🎮 [미니게임] 코인 폭발 타이밍 도전</button> <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>`;
+        if (!isCryptoGameActive) {
+            actionArea.innerHTML = `
+                <button class="action-btn" style="background: linear-gradient(135deg, #f43f5e, #e11d48); padding: 8px 20px; font-size: 14px;" onclick="startCryptoMinigame()">🚀 사이버 코인 급등락 미니게임 시작 (스페이스바로 매도!)</button>
+                <div style="margin-top: 6px;"><button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button></div>
+            `;
+        }
     } else if (type === 'realty') {
         actionArea.innerHTML = `
-            <button class="action-btn" onclick="buyBuilding('초역세권 오피스텔', 30000000, 2000000)">🏠 오피스텔 (3천만)</button>
-            <button class="action-btn" onclick="buyBuilding('테헤란로 빌딩', 60000000, 5000000)">🏢 빌딩 (6천만)</button>
-            <button class="action-btn" onclick="buyBuilding('강남 타워', 100000000, 12000000)">🏙️ 강남타워 (1억)</button>
+            <button class="action-btn" onclick="buyBuilding('초역세권 오피스텔', 30000000, 2000000)">🏠 오피스텔 (3천만 / 월세 200만)</button>
+            <button class="action-btn" onclick="buyBuilding('테헤란로 빌딩', 60000000, 5000000)">🏢 빌딩 (6천만 / 월세 500만)</button>
+            <button class="action-btn" onclick="buyBuilding('강남 타워', 100000000, 12000000)">🏙️ 강남타워 (1억 / 월세 1200만)</button>
             <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>
         `;
     }
 }
 
-function startStockMiniGame() {
+// 0.1초 단위 상하 폭등/폭락 코인 타이밍 미니게임 시작 함수
+function startCryptoMinigame() {
     if (isGameOver) return;
-    document.getElementById('actionArea').innerHTML = '';
-    document.getElementById('minigameBox').style.display = 'block';
+    isCryptoGameActive = true;
+    cryptoMultiplier = 1.0;
    
-    let speedBonus = miniGameCount * 1.5;
-    let targetWidth = Math.max(40, 110 - (miniGameCount * 12));
+    const dialogue = document.getElementById('dialogue');
+    const actionArea = document.getElementById('actionArea');
    
-    document.getElementById('targetZone').style.width = targetWidth + 'px';
-    document.getElementById('minigameTitle').innerText = `📈 [주식 미니게임 Lv.${miniGameCount + 1}] 초록 영역 적중 시 성공!`;
-   
-    meterPos = 0;
-    meterSpeed = 7 + speedBonus;
-    meterActive = true;
-    updateMeter();
-}
+    dialogue.innerHTML = "🚀 <b>사이버 코인 실시간 급등락 중!</b> 순식간에 마이너스로 꽂힐 수 있으니 눈치껏 <b>[스페이스바]</b>를 누르세요!";
+    actionArea.innerHTML = `
+        <div style="font-size: 18px; font-weight: 700; color: #f43f5e; margin-bottom: 6px;">현재 배율: <span id="multiplierDisplay">1.00</span>x</div>
+        <button class="action-btn" style="background: linear-gradient(135deg, #f43f5e, #e11d48); padding: 10px 24px; font-size: 15px;" onclick="stopCryptoMinigame()">🛑 지금 매도 (수익/손실 확정 & 턴 진행)</button>
+    `;
 
-function startCryptoMiniGame() {
-    if (isGameOver) return;
-    document.getElementById('actionArea').innerHTML = '';
-    document.getElementById('minigameBox').style.display = 'block';
-   
-    let speedBonus = miniGameCount * 2.2;
-    let targetWidth = Math.max(35, 100 - (miniGameCount * 14));
-   
-    document.getElementById('targetZone').style.width = targetWidth + 'px';
-    document.getElementById('minigameTitle').innerText = `🚀 [코인 미니게임 Lv.${miniGameCount + 1}] 고속 게이지 폭등 도전!`;
-   
-    meterPos = 0;
-    meterSpeed = 12 + speedBonus;
-    meterActive = true;
-    updateMeter();
-}
-
-function updateMeter() {
-    if (!meterActive) return;
-    meterPos += meterSpeed;
-    if (meterPos > 780 || meterPos < 0) meterSpeed *= -1;
-    document.getElementById('meterIndicator').style.left = meterPos + 'px';
-    meterAnimId = requestAnimationFrame(updateMeter);
-}
-
-function stopMeter() {
-    if (!meterActive || isGameOver) return;
-    meterActive = false;
-    cancelAnimationFrame(meterAnimId);
-    document.getElementById('minigameBox').style.display = 'none';
-
-    let targetZoneEl = document.getElementById('targetZone');
-    let targetLeft = parseFloat(targetZoneEl.style.left) || 330;
-    let targetWidth = parseFloat(targetZoneEl.style.width) || 110;
-    let indicatorPos = meterPos + 9;
-
-    let success = indicatorPos >= targetLeft && indicatorPos <= (targetLeft + targetWidth);
-   
-    if (currentScene === 'stock') {
-        let winProb = 0.5 + currentNews.stockMod;
-        if (success || Math.random() < winProb) {
-            let profit = Math.floor(money * 0.4);
-            money += profit;
-            addFloatingText(profit);
-        } else {
-            let loss = Math.floor(money * 0.2);
-            money -= loss;
-            addFloatingText(-loss);
+    if (cryptoGameInterval) clearInterval(cryptoGameInterval);
+    // 0.1초(100ms)마다 대폭 폭등(+45%)과 대폭 폭락(-45%)이 널뛰기하도록 설정
+    cryptoGameInterval = setInterval(() => {
+        let delta = (Math.random() * 0.9 - 0.45);
+        cryptoMultiplier = Math.max(0.05, cryptoMultiplier + delta);
+       
+        let span = document.getElementById('multiplierDisplay');
+        if (span) {
+            span.innerText = cryptoMultiplier.toFixed(2);
+            span.style.color = cryptoMultiplier >= 1.0 ? '#10b981' : '#f43f5e';
         }
-    } else if (currentScene === 'crypto') {
-        if (success) {
-            let profit = Math.floor(money * 2.0);
-            money += profit;
-            addFloatingText(profit);
-        } else {
-            let loss = Math.floor(money * 0.5);
-            money -= loss;
-            addFloatingText(-loss);
-        }
+    }, 100);
+}
+
+// 코인 타이밍 미니게임 종료 및 정산 함수 (자산 증가 및 감소 모두 반영)
+function stopCryptoMinigame() {
+    if (!isCryptoGameActive) return;
+    isCryptoGameActive = false;
+    if (cryptoGameInterval) clearInterval(cryptoGameInterval);
+
+    let finalRate = cryptoMultiplier - 1.0;
+    let gainLoss = Math.floor(cash * finalRate);
+    cash += gainLoss;
+    if (cash < 10000) cash = 10000; // 파산 방지 최소 잔고
+
+    addFloatingText(gainLoss);
+    updateUI();
+
+    const dialogue = document.getElementById('dialogue');
+    if (finalRate < 0) {
+        dialogue.innerHTML = `💥 <b>코인 폭락 직격탄!</b> 손실을 입었습니다! (${gainLoss.toLocaleString()}원, 최종 배율: ${cryptoMultiplier.toFixed(2)}x)`;
+    } else {
+        dialogue.innerHTML = `🎉 <b>코인 급등 타이밍 성공!</b> 배율 <b>${cryptoMultiplier.toFixed(2)}x</b>로 수익이 확정되어 하룻밤이 지나갑니다!`;
     }
 
-    miniGameCount += 1;
-    document.getElementById('diffLevelText').innerText = miniGameCount + 1;
+    setTimeout(() => {
+        processTurn();
+    }, 1500);
+}
+
+function renderStockMarketUI() {
+    const actionArea = document.getElementById('actionArea');
+    let html = `<div style="display: flex; gap: 10px; align-items: flex-start;">`;
+   
+    // 왼쪽: 6개 주식 종목 거래 구역
+    html += `<div style="flex: 1.4; max-height: 155px; overflow-y: auto; padding-right: 4px;">`;
+    stocks.forEach(s => {
+        let diff = s.price - s.prevPrice;
+        let rate = (diff / s.prevPrice * 100).toFixed(1);
+        let color = diff >= 0 ? '#10b981' : '#f43f5e';
+        let sign = diff >= 0 ? '+' : '';
+        let avgCost = s.owned > 0 ? Math.floor(s.totalCost / s.owned) : 0;
+        let returnRate = s.owned > 0 ? (((s.price - avgCost) / avgCost) * 100).toFixed(1) : '0.0';
+        let maxBuyable = Math.floor(cash / s.price);
+
+        html += `
+            <div class="stock-card">
+                <div style="text-align:left; width: 45%;">
+                    <span style="font-weight:700; color:#ffffff; font-size:11px;">${s.name}</span>
+                    <span style="font-size:10px; color:${color}; margin-left:3px;">${s.price.toLocaleString()} (${sign}${rate}%)</span>
+                    <div style="font-size:9px; color:#cbd5e1; margin-top:1px;">보유:${s.owned}주 | 평단:${avgCost.toLocaleString()} | 수익:<span style="color:${returnRate >= 0 ? '#10b981':'#f43f5e'}">${returnRate}%</span></div>
+                    <div style="font-size:9px; color:#38bdf8;">최대매수: ${maxBuyable}주</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <input type="number" id="qty_${s.id}" class="stock-input" value="1" min="1" max="99999">
+                    <button class="action-btn" onclick="executeBuy('${s.id}')">매수</button>
+                    <button class="sell-btn" onclick="executeSell('${s.id}')">매도</button>
+                    <button class="action-btn" style="background:#059669;" onclick="executeMaxBuy('${s.id}')">최대</button>
+                </div>
+            </div>
+        `;
+    });
+    html += `</div>`;
+
+    // 오른쪽: 실시간 뉴스 속보 게시판 아카이브 구역
+    html += `<div style="flex: 1; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px; padding: 6px 10px; max-height: 155px; overflow-y: auto;">
+        <div style="font-size: 12px; font-weight: 700; color: #38bdf8; margin-bottom: 4px; text-align: left;">📰 실시간 뉴스 속보 게시판</div>
+    `;
+    newsArchive.slice().reverse().forEach(n => {
+        html += `<div class="news-item">${n}</div>`;
+    });
+    html += `</div>`;
+
+    html += `</div>
+        <div style="margin-top: 6px;">
+            <button class="enter-btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); padding: 7px 16px; font-size: 13px;" onclick="passTurnByStock()">🌙 매수·매도 종료하고 메인으로 귀환 (하룻밤 지나기)</button>
+            <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>
+        </div>
+    `;
+
+    actionArea.innerHTML = html;
+}
+
+function executeBuy(stockId) {
+    if (isGameOver) return;
+    let inputEl = document.getElementById(`qty_${stockId}`);
+    let qty = parseInt(inputEl.value) || 0;
+    if (qty <= 0) { alert("올바른 수량을 입력해주세요!"); return; }
+
+    let s = stocks.find(item => item.id === stockId);
+    let totalCost = s.price * qty;
+    if (cash < totalCost) { alert("현금이 부족합니다!"); return; }
+   
+    cash -= totalCost;
+    s.totalCost += totalCost;
+    s.owned += qty;
+    addFloatingText(-totalCost);
+   
+    updateUI();
+    renderStockMarketUI();
+}
+
+function executeMaxBuy(stockId) {
+    if (isGameOver) return;
+    let s = stocks.find(item => item.id === stockId);
+    let maxQty = Math.floor(cash / s.price);
+    if (maxQty <= 0) { alert("매수할 현금이 부족합니다!"); return; }
+
+    let totalCost = s.price * maxQty;
+    cash -= totalCost;
+    s.totalCost += totalCost;
+    s.owned += maxQty;
+    addFloatingText(-totalCost);
+
+    updateUI();
+    renderStockMarketUI();
+}
+
+function executeSell(stockId) {
+    if (isGameOver) return;
+    let inputEl = document.getElementById(`qty_${stockId}`);
+    let qty = parseInt(inputEl.value) || 0;
+    let s = stocks.find(item => item.id === stockId);
+    if (s.owned <= 0) { alert("보유한 주식이 없습니다!"); return; }
+
+    let sellQty = Math.min(qty, s.owned);
+    let avgCost = s.owned > 0 ? (s.totalCost / s.owned) : 0;
+   
+    let revenue = s.price * sellQty;
+    cash += revenue;
+
+    s.owned -= sellQty;
+    if (s.owned <= 0) {
+        s.totalCost = 0;
+        s.owned = 0;
+    } else {
+        s.totalCost -= (avgCost * sellQty);
+    }
+
+    addFloatingText(revenue);
+   
+    updateUI();
+    renderStockMarketUI();
+}
+
+function passTurnByStock() {
     canvas.focus();
     processTurn();
+}
+
+function updateStockPrices() {
+    stocks.forEach(s => {
+        s.prevPrice = s.price;
+        let changePercent = (Math.random() * (s.volatility * 2) - s.volatility) + currentNews.stockMod;
+        let newPrice = Math.floor(s.price * (1 + changePercent));
+        s.price = Math.max(1000, newPrice);
+    });
 }
 
 function processTurn() {
     if (isGameOver) return;
 
+    isDay = !isDay;
+    document.getElementById('dayNightText').innerText = isDay ? "아침 🌅" : "밤 🌙";
+    document.getElementById('dayNightText').style.color = isDay ? "#fbbf24" : "#a855f7";
+
+    updateStockPrices();
+
     let rentSum = 0;
     ownedBuildings.forEach(b => rentSum += b.rent);
     if (rentSum > 0) {
-        money += rentSum;
+        cash += rentSum;
         addFloatingText(rentSum);
     }
    
-    // 1억 원 목표 달성 체크 (즉시 승리)
-    if (money >= goalMoney) {
+    let currentTotalAssets = getTotalAssets();
+
+    if (currentTotalAssets >= goalMoney) {
         updateUI();
         triggerGameOver('win');
         return;
     }
 
-    // 턴 증가
     turn += 1;
    
-    // 12턴이 초과되는 즉시 패배 처리 (12턴 종료 시점 감지)
     if (turn > 12) {
-        turn = 12; // UI 표시를 12/12로 고정
+        turn = 12;
         updateUI();
         triggerGameOver('lose');
         return;
     }
    
-    if (Math.random() < 0.75) {
+    if (Math.random() < 0.8) {
         currentNews = newsEvents[Math.floor(Math.random() * newsEvents.length)];
     } else {
-        currentNews = { text: "시티 금융 시장이 안정세를 유지하고 있습니다.", stockMod: 0, cryptoMod: 0 };
+        currentNews = { text: "시티 증권 시장이 특별한 이슈 없이 균형 잡힌 흐름을 보이고 있습니다.", stockMod: 0 };
     }
+   
+    let newsFormatted = `[턴 ${turn}] ${currentNews.text}`;
+    newsArchive.push(newsFormatted);
     document.getElementById('newsText').innerText = currentNews.text;
 
     updateUI();
     lastProximityKey = null;
 
-    if (money <= 0) {
+    let bObj = buildings.find(b => b.id === 'stock');
+    currentScene = 'town';
+    player.x = bObj.portalX;
+    player.y = 320;
+    document.getElementById('locationText').innerText = '메인 스트리트';
+
+    checkProximity();
+
+    if (currentTotalAssets <= 0) {
         updateUI();
         triggerGameOver('lose');
     }
@@ -658,8 +813,8 @@ function processTurn() {
 
 function investBank() {
     if (isGameOver) return;
-    let interest = Math.floor(money * 0.05);
-    money += interest;
+    let interest = Math.floor(cash * 0.05);
+    cash += interest;
     addFloatingText(interest);
     canvas.focus();
     processTurn();
@@ -667,13 +822,13 @@ function investBank() {
 
 function buyBuilding(name, price, rent) {
     if (isGameOver) return;
-    if (money < price) { alert("자산이 부족합니다!"); return; }
-    money -= price;
+    if (cash < price) { alert("현금이 부족합니다!"); return; }
+    cash -= price;
     addFloatingText(-price);
     ownedBuildings.push({ name, rent });
     canvas.focus();
    
-    if (money >= goalMoney) {
+    if (getTotalAssets() >= goalMoney) {
         updateUI();
         triggerGameOver('win');
         return;
@@ -682,12 +837,14 @@ function buyBuilding(name, price, rent) {
 }
 
 function updateUI() {
-    document.getElementById('moneyText').innerText = money.toLocaleString();
+    let totalAssets = getTotalAssets();
+    document.getElementById('moneyText').innerText = totalAssets.toLocaleString();
+    document.getElementById('cashText').innerText = cash.toLocaleString();
     document.getElementById('turnText').innerText = turn > 12 ? 12 : turn;
 
-    let percent = Math.min(100, Math.max(1, Math.floor((money / goalMoney) * 100)));
+    let percent = Math.min(100, Math.max(1, Math.floor((totalAssets / goalMoney) * 100)));
     document.getElementById('progressBar').style.width = percent + '%';
-    document.getElementById('progressText').innerText = `1억 원 목표 달성도: ${percent}% (${money.toLocaleString()}원 / 100,000,000원)`;
+    document.getElementById('progressText').innerText = `1억 원 목표 달성도: ${percent}% (총자산 ${totalAssets.toLocaleString()}원 / 100,000,000원)`;
 }
 
 function update() {
@@ -747,6 +904,7 @@ function draw() {
         ctx.shadowColor = '#000';
         ctx.shadowBlur = 20;
 
+        let finalAssets = getTotalAssets();
         if (gameResult === 'win') {
             ctx.fillStyle = '#fbbf24';
             ctx.font = '700 48px Pretendard, sans-serif';
@@ -762,7 +920,7 @@ function draw() {
 
             ctx.fillStyle = '#cbd5e1';
             ctx.font = '600 18px Pretendard, sans-serif';
-            ctx.fillText('12턴 종료! 목표 금액 미달성 최종 자산: ' + money.toLocaleString() + '원', canvas.width / 2, canvas.height / 2 + 30);
+            ctx.fillText('12턴 종료! 목표 금액 미달성 최종 자산: ' + finalAssets.toLocaleString() + '원', canvas.width / 2, canvas.height / 2 + 30);
         }
         ctx.restore();
     }
@@ -770,12 +928,35 @@ function draw() {
 
 function drawTown() {
     let skyGradient = ctx.createLinearGradient(0, 0, 0, 260);
-    skyGradient.addColorStop(0, '#090d16');
-    skyGradient.addColorStop(1, '#1e293b');
+    if (isDay) {
+        skyGradient.addColorStop(0, '#0284c7');
+        skyGradient.addColorStop(1, '#38bdf8');
+    } else {
+        skyGradient.addColorStop(0, '#090d16');
+        skyGradient.addColorStop(1, '#1e293b');
+    }
     ctx.fillStyle = skyGradient;
     ctx.fillRect(cameraX, 0, canvas.width, 260);
 
-    ctx.fillStyle = 'rgba(30, 41, 59, 0.4)';
+    ctx.save();
+    if (isDay) {
+        ctx.fillStyle = '#fbbf24';
+        ctx.shadowColor = '#fbbf24';
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        ctx.arc(cameraX + 700, 60, 26, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        ctx.fillStyle = '#fef08a';
+        ctx.shadowColor = '#fef08a';
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(cameraX + 700, 60, 22, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+
+    ctx.fillStyle = isDay ? 'rgba(255, 255, 255, 0.2)' : 'rgba(30, 41, 59, 0.4)';
     ctx.fillRect(cameraX + 50, 100, 90, 160);
     ctx.fillRect(cameraX + 300, 70, 110, 190);
     ctx.fillRect(cameraX + 700, 80, 100, 180);
@@ -792,7 +973,7 @@ function drawTown() {
 
         for (let wx = b.x + 20; wx < b.x + 180; wx += 40) {
             for (let wy = 140; wy < 320; wy += 45) {
-                ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
+                ctx.fillStyle = isDay ? 'rgba(255, 255, 255, 0.6)' : 'rgba(56, 189, 248, 0.15)';
                 ctx.fillRect(wx, wy, 22, 28);
                 ctx.fillStyle = 'rgba(251, 191, 36, 0.8)';
                 ctx.fillRect(wx + 4, wy + 4, 14, 20);
@@ -859,6 +1040,7 @@ function drawInterior() {
 function drawVectorPlayer(x, y, facing) {
     let bounce = Math.sin(player.animFrame) * 2;
     if (!player.isGrounded) bounce = -6;
+    let totalAssets = getTotalAssets();
 
     if (isGameOver && gameResult === 'lose') {
         ctx.fillStyle = '#475569';
@@ -886,7 +1068,7 @@ function drawVectorPlayer(x, y, facing) {
         return;
     }
 
-    if (money >= 50000000) {
+    if (totalAssets >= 50000000) {
         ctx.save();
         ctx.strokeStyle = '#fbbf24';
         ctx.lineWidth = 3;
@@ -905,15 +1087,15 @@ function drawVectorPlayer(x, y, facing) {
 
     ctx.fillStyle = '#fce7f3';
     ctx.beginPath();
-    ctx.roundRect(x - 10, y - 30 + bounce, 20, 16, [6]);
+    ctx.roundRect(x - 10, y - 30, 20, 16, [6]);
     ctx.fill();
 
-    if (money >= 50000000) {
+    if (totalAssets >= 50000000) {
         ctx.fillStyle = '#fbbf24';
         ctx.fillRect(x - 12, y - 38 + bounce, 24, 10);
         ctx.fillStyle = '#fbbf24';
         ctx.fillRect(x - 2, y - 14 + bounce, 4, 16);
-    } else if (money >= 20000000) {
+    } else if (totalAssets >= 20000000) {
         ctx.fillStyle = '#a855f7';
         ctx.fillRect(x - 12, y - 38 + bounce, 24, 10);
         ctx.fillStyle = '#e2e8f0';
@@ -936,7 +1118,7 @@ function drawVectorPlayer(x, y, facing) {
     ctx.strokeStyle = 'rgba(56, 189, 248, 0.3)';
     ctx.stroke();
 
-    ctx.fillStyle = money >= 50000000 ? '#fbbf24' : '#38bdf8';
+    ctx.fillStyle = totalAssets >= 50000000 ? '#fbbf24' : '#38bdf8';
     ctx.font = '600 12px Pretendard, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(player.name, x, y - 48 + bounce);
@@ -998,4 +1180,4 @@ requestAnimationFrame(update);
 </html>
 """
 
-components.html(game_html, height=920)
+components.html(game_html, height=980)
