@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="메이플 비치 자산관리 RPG", page_icon="🍁", layout="wide")
 
 st.title("🏙️ 모던 벡터 시티 & 투자 RPG")
-st.caption("방향키(A, D)로 이동, Space키로 점프! 초기 자산이 1,000만 원으로 상향되었습니다.")
+st.caption("방향키(A, D)로 이동, Space키로 점프! 부동산(오피스텔 등)의 가격과 월세 밸런스가 매력적으로 상향 조정되었습니다.")
 
 game_html = """
 <!DOCTYPE html>
@@ -294,7 +294,6 @@ window.addEventListener('load', () => {
     canvas.focus();
 });
 
-// 초기 자산을 1,000만 원으로 설정
 let cash = 10000000;
 let turn = 1;
 let isDay = true;
@@ -559,10 +558,11 @@ function renderDialogueOptions(type) {
             `;
         }
     } else if (type === 'realty') {
+        // 오피스텔 가격 2,000만 원 / 월세 500만 원으로 상향 적용
         actionArea.innerHTML = `
-            <button class="action-btn" onclick="buyBuilding('초역세권 오피스텔', 30000000, 2000000)">🏠 오피스텔 (3천만 / 월세 200만)</button>
-            <button class="action-btn" onclick="buyBuilding('테헤란로 빌딩', 60000000, 5000000)">🏢 빌딩 (6천만 / 월세 500만)</button>
-            <button class="action-btn" onclick="buyBuilding('강남 타워', 100000000, 12000000)">🏙️ 강남타워 (1억 / 월세 1200만)</button>
+            <button class="action-btn" onclick="buyBuilding('초역세권 오피스텔', 20000000, 5000000)">🏠 오피스텔 (2천만 / 월세 500만)</button>
+            <button class="action-btn" onclick="buyBuilding('테헤란로 빌딩', 45000000, 12000000)">🏢 빌딩 (4천5백만 / 월세 1200만)</button>
+            <button class="action-btn" onclick="buyBuilding('강남 타워', 80000000, 25000000)">🏙️ 강남타워 (8천만 / 월세 2500만)</button>
             <button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button>
         `;
     }
