@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="메이플 비치 자산관리 RPG", page_icon="🍁", layout="wide")
 
 st.title("🏙️ 모던 벡터 시티 & 투자 RPG")
-st.caption("방향키(A, D)로 이동, Space키로 점프! 초기 자산이 500만 원으로 상향되었고 코인 변동 속도가 더 빨라졌습니다.")
+st.caption("방향키(A, D)로 이동, Space키로 점프! 증권타워에 명확한 '보유 주식 현황판' 칸이 추가되었습니다.")
 
 game_html = """
 <!DOCTYPE html>
@@ -221,30 +221,32 @@ game_html = """
         background: rgba(30, 41, 59, 0.6);
         border: 1px solid rgba(56, 189, 248, 0.2);
         border-radius: 8px;
-        padding: 8px 12px;
-        margin-bottom: 6px;
+        padding: 6px 10px;
+        margin-bottom: 4px;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
     .stock-input {
-        width: 50px;
+        width: 45px;
         background: #0f172a;
         border: 1px solid rgba(56, 189, 248, 0.4);
         color: white;
         text-align: center;
         border-radius: 4px;
-        padding: 3px;
+        padding: 2px;
         font-size: 12px;
     }
-    .news-item {
-        background: rgba(30, 41, 59, 0.5);
-        border-left: 3px solid #38bdf8;
-        padding: 6px 10px;
-        margin-bottom: 6px;
-        border-radius: 4px;
-        font-size: 12px;
-        text-align: left;
+    .portfolio-item {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        padding: 5px 8px;
+        margin-bottom: 4px;
+        border-radius: 6px;
+        font-size: 11px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         color: #e2e8f0;
     }
 </style>
@@ -292,7 +294,6 @@ window.addEventListener('load', () => {
     canvas.focus();
 });
 
-// 초기 현금 500만 원으로 상향
 let cash = 5000000;
 let turn = 1;
 let isDay = true;
@@ -358,7 +359,6 @@ let portalAnim = 0;
 let keys = {};
 let lastProximityKey = null;
 
-// 코인 초고속 변동 미니게임 상태 변수
 let isCryptoGameActive = false;
 let cryptoMultiplier = 1.0;
 let cryptoGameInterval = null;
@@ -370,7 +370,6 @@ document.addEventListener('keydown', (e) => {
     }
     keys[e.key] = true;
    
-    // 코인 미니게임 중 스페이스바를 누르면 매도/확정!
     if ((e.key === ' ' || e.key === 'Spacebar') && isCryptoGameActive) {
         stopCryptoMinigame();
         return;
@@ -400,7 +399,7 @@ function getTotalAssets() {
 }
 
 function restartGame() {
-    cash = 5000000; // 리스타트 시에도 500만 원으로 초기화
+    cash = 5000000;
     turn = 1;
     isDay = true;
     currentScene = 'town';
@@ -568,7 +567,6 @@ function renderDialogueOptions(type) {
     }
 }
 
-// 0.05초 단위 초고속 급등락 코인 타이밍 미니게임 시작 함수 (변동 속도 더 빠르게 상향)
 function startCryptoMinigame() {
     if (isGameOver) return;
     isCryptoGameActive = true;
@@ -584,7 +582,6 @@ function startCryptoMinigame() {
     `;
 
     if (cryptoGameInterval) clearInterval(cryptoGameInterval);
-    // 0.05초(50ms) 간격으로 변동 속도 대폭 상향 및 상하 널뛰기 극대화 (-50% ~ +55%)
     cryptoGameInterval = setInterval(() => {
         let delta = (Math.random() * 1.05 - 0.50);
         cryptoMultiplier = Math.max(0.02, cryptoMultiplier + delta);
@@ -597,7 +594,6 @@ function startCryptoMinigame() {
     }, 50);
 }
 
-// 코인 타이밍 미니게임 종료 및 정산 함수
 function stopCryptoMinigame() {
     if (!isCryptoGameActive) return;
     isCryptoGameActive = false;
@@ -606,7 +602,7 @@ function stopCryptoMinigame() {
     let finalRate = cryptoMultiplier - 1.0;
     let gainLoss = Math.floor(cash * finalRate);
     cash += gainLoss;
-    if (cash < 10000) cash = 10000; // 파산 방지 최소 잔고
+    if (cash < 10000) cash = 10000;
 
     addFloatingText(gainLoss);
     updateUI();
@@ -625,28 +621,25 @@ function stopCryptoMinigame() {
 
 function renderStockMarketUI() {
     const actionArea = document.getElementById('actionArea');
-    let html = `<div style="display: flex; gap: 10px; align-items: flex-start;">`;
+    let html = `<div style="display: flex; gap: 8px; align-items: flex-start;">`;
    
-    // 왼쪽: 6개 주식 종목 거래 구역
-    html += `<div style="flex: 1.4; max-height: 155px; overflow-y: auto; padding-right: 4px;">`;
+    // 왼쪽 1: 6개 주식 종목 거래 구역
+    html += `<div style="flex: 1.3; max-height: 155px; overflow-y: auto; padding-right: 4px;">`;
     stocks.forEach(s => {
         let diff = s.price - s.prevPrice;
         let rate = (diff / s.prevPrice * 100).toFixed(1);
         let color = diff >= 0 ? '#10b981' : '#f43f5e';
         let sign = diff >= 0 ? '+' : '';
-        let avgCost = s.owned > 0 ? Math.floor(s.totalCost / s.owned) : 0;
-        let returnRate = s.owned > 0 ? (((s.price - avgCost) / avgCost) * 100).toFixed(1) : '0.0';
         let maxBuyable = Math.floor(cash / s.price);
 
         html += `
             <div class="stock-card">
-                <div style="text-align:left; width: 45%;">
+                <div style="text-align:left; width: 44%;">
                     <span style="font-weight:700; color:#ffffff; font-size:11px;">${s.name}</span>
-                    <span style="font-size:10px; color:${color}; margin-left:3px;">${s.price.toLocaleString()} (${sign}${rate}%)</span>
-                    <div style="font-size:9px; color:#cbd5e1; margin-top:1px;">보유:${s.owned}주 | 평단:${avgCost.toLocaleString()} | 수익:<span style="color:${returnRate >= 0 ? '#10b981':'#f43f5e'}">${returnRate}%</span></div>
-                    <div style="font-size:9px; color:#38bdf8;">최대매수: ${maxBuyable}주</div>
+                    <span style="font-size:10px; color:${color}; margin-left:2px;">${s.price.toLocaleString()} (${sign}${rate}%)</span>
+                    <div style="font-size:9px; color:#38bdf8; margin-top:1px;">최대매수: ${maxBuyable}주</div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 4px;">
+                <div style="display: flex; align-items: center; gap: 3px;">
                     <input type="number" id="qty_${s.id}" class="stock-input" value="1" min="1" max="99999">
                     <button class="action-btn" onclick="executeBuy('${s.id}')">매수</button>
                     <button class="sell-btn" onclick="executeSell('${s.id}')">매도</button>
@@ -657,9 +650,40 @@ function renderStockMarketUI() {
     });
     html += `</div>`;
 
+    // 왼쪽 2: 명확하게 볼 수 있는 '내 보유 주식 현황판' 칸 새로 추가!
+    html += `<div style="flex: 1.1; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 6px 8px; max-height: 155px; overflow-y: auto;">
+        <div style="font-size: 11px; font-weight: 700; color: #10b981; margin-bottom: 4px; text-align: left;">📋 내 보유 주식 현황판</div>
+    `;
+   
+    let hasOwnedStocks = false;
+    stocks.forEach(s => {
+        if (s.owned > 0) {
+            hasOwnedStocks = true;
+            let avgCost = Math.floor(s.totalCost / s.owned);
+            let returnRate = (((s.price - avgCost) / avgCost) * 100).toFixed(1);
+            let returnColor = returnRate >= 0 ? '#10b981' : '#f43f5e';
+            html += `
+                <div class="portfolio-item">
+                    <div style="text-align: left;">
+                        <span style="font-weight:700; color:#fff;">${s.name}</span><br/>
+                        <span>보유: <b>${s.owned}주</b> | 평단: ${avgCost.toLocaleString()}원</span>
+                    </div>
+                    <div style="text-align: right; color:${returnColor}; font-weight:600;">
+                        ${returnRate}%
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    if (!hasOwnedStocks) {
+        html += `<div style="font-size: 10px; color: #64748b; text-align: center; margin-top: 35px;">현재 보유 중인 주식이 없습니다.</div>`;
+    }
+    html += `</div>`;
+
     // 오른쪽: 실시간 뉴스 속보 게시판 아카이브 구역
-    html += `<div style="flex: 1; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px; padding: 6px 10px; max-height: 155px; overflow-y: auto;">
-        <div style="font-size: 12px; font-weight: 700; color: #38bdf8; margin-bottom: 4px; text-align: left;">📰 실시간 뉴스 속보 게시판</div>
+    html += `<div style="flex: 1; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px; padding: 6px 8px; max-height: 155px; overflow-y: auto;">
+        <div style="font-size: 11px; font-weight: 700; color: #38bdf8; margin-bottom: 4px; text-align: left;">📰 실시간 뉴스 속보</div>
     `;
     newsArchive.slice().reverse().forEach(n => {
         html += `<div class="news-item">${n}</div>`;
