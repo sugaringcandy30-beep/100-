@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="메이플 비치 자산관리 RPG", page_icon="🍁", layout="wide")
 
 st.title("🏙️ 모던 벡터 시티 & 투자 RPG")
-st.caption("방향키(A, D)로 이동, Space키로 점프! 증권타워에 명확한 '보유 주식 현황판' 칸이 추가되었습니다.")
+st.caption("방향키(A, D)로 이동, Space키로 점프! 초기 자산이 1,000만 원으로 상향되었습니다.")
 
 game_html = """
 <!DOCTYPE html>
@@ -255,7 +255,7 @@ game_html = """
 
 <div id="newsTickerBox">
     <span id="newsTag">실시간 속보</span>
-    <span id="newsText">모던 벡터 시티 금융 시장이 개장했습니다. 초기자금 500만 원으로 투자를 시작하세요!</span>
+    <span id="newsText">모던 벡터 시티 금융 시장이 개장했습니다. 초기자금 1,000만 원으로 투자를 시작하세요!</span>
 </div>
 
 <div id="gameContainer">
@@ -267,12 +267,12 @@ game_html = """
         <span>📍 위치: <span id="locationText" style="color: #38bdf8;">메인 스트리트</span></span>
         <span>☀️ 시간대: <span id="dayNightText" style="color: #fbbf24;">아침 🌅</span></span>
         <span>📅 턴: <span id="turnText">1</span>/12</span>
-        <span>💰 총 자산: <span id="moneyText" style="color: #10b981;">5,000,000</span>원 (현금: <span id="cashText" style="color: #38bdf8;">5,000,000</span>원)</span>
+        <span>💰 총 자산: <span id="moneyText" style="color: #10b981;">10,000,000</span>원 (현금: <span id="cashText" style="color: #38bdf8;">10,000,000</span>원)</span>
     </div>
 
     <div id="progressContainer">
-        <div id="progressBar"></div>
-        <div id="progressText">1억 원 목표 달성도: 5%</div>
+        <div id="progressBar" style="width: 10%;"></div>
+        <div id="progressText">1억 원 목표 달성도: 10%</div>
     </div>
 
     <div id="dialogue">💬 방향키로 세련된 벡터 빌딩들을 탐험하고 입구 포탈[▲ / W]로 입장해보세요.</div>
@@ -294,7 +294,8 @@ window.addEventListener('load', () => {
     canvas.focus();
 });
 
-let cash = 5000000;
+// 초기 자산을 1,000만 원으로 설정
+let cash = 10000000;
 let turn = 1;
 let isDay = true;
 let currentScene = 'town';
@@ -399,7 +400,7 @@ function getTotalAssets() {
 }
 
 function restartGame() {
-    cash = 5000000;
+    cash = 10000000;
     turn = 1;
     isDay = true;
     currentScene = 'town';
@@ -623,7 +624,6 @@ function renderStockMarketUI() {
     const actionArea = document.getElementById('actionArea');
     let html = `<div style="display: flex; gap: 8px; align-items: flex-start;">`;
    
-    // 왼쪽 1: 6개 주식 종목 거래 구역
     html += `<div style="flex: 1.3; max-height: 155px; overflow-y: auto; padding-right: 4px;">`;
     stocks.forEach(s => {
         let diff = s.price - s.prevPrice;
@@ -650,7 +650,6 @@ function renderStockMarketUI() {
     });
     html += `</div>`;
 
-    // 왼쪽 2: 명확하게 볼 수 있는 '내 보유 주식 현황판' 칸 새로 추가!
     html += `<div style="flex: 1.1; background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 6px 8px; max-height: 155px; overflow-y: auto;">
         <div style="font-size: 11px; font-weight: 700; color: #10b981; margin-bottom: 4px; text-align: left;">📋 내 보유 주식 현황판</div>
     `;
@@ -681,7 +680,6 @@ function renderStockMarketUI() {
     }
     html += `</div>`;
 
-    // 오른쪽: 실시간 뉴스 속보 게시판 아카이브 구역
     html += `<div style="flex: 1; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px; padding: 6px 8px; max-height: 155px; overflow-y: auto;">
         <div style="font-size: 11px; font-weight: 700; color: #38bdf8; margin-bottom: 4px; text-align: left;">📰 실시간 뉴스 속보</div>
     `;
