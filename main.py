@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="메이플 비치 자산관리 RPG", page_icon="🍁", layout="wide")
 
 st.title("🏙️ 모던 벡터 시티 & 투자 RPG")
-st.caption("방향키(A, D)로 이동, Space키로 점프! 코인 미니게임이 극단적인 대폭 하락 및 상승을 오가도록 수정되었습니다.")
+st.caption("방향키(A, D)로 이동, Space키로 점프! 초기 자산이 500만 원으로 상향되었고 코인 변동 속도가 더 빨라졌습니다.")
 
 game_html = """
 <!DOCTYPE html>
@@ -253,7 +253,7 @@ game_html = """
 
 <div id="newsTickerBox">
     <span id="newsTag">실시간 속보</span>
-    <span id="newsText">모던 벡터 시티 금융 시장이 개장했습니다. 증권타워에서 주식을 매매하고 하룻밤을 보내세요!</span>
+    <span id="newsText">모던 벡터 시티 금융 시장이 개장했습니다. 초기자금 500만 원으로 투자를 시작하세요!</span>
 </div>
 
 <div id="gameContainer">
@@ -265,12 +265,12 @@ game_html = """
         <span>📍 위치: <span id="locationText" style="color: #38bdf8;">메인 스트리트</span></span>
         <span>☀️ 시간대: <span id="dayNightText" style="color: #fbbf24;">아침 🌅</span></span>
         <span>📅 턴: <span id="turnText">1</span>/12</span>
-        <span>💰 총 자산: <span id="moneyText" style="color: #10b981;">1,000,000</span>원 (현금: <span id="cashText" style="color: #38bdf8;">1,000,000</span>원)</span>
+        <span>💰 총 자산: <span id="moneyText" style="color: #10b981;">5,000,000</span>원 (현금: <span id="cashText" style="color: #38bdf8;">5,000,000</span>원)</span>
     </div>
 
     <div id="progressContainer">
         <div id="progressBar"></div>
-        <div id="progressText">1억 원 목표 달성도: 1%</div>
+        <div id="progressText">1억 원 목표 달성도: 5%</div>
     </div>
 
     <div id="dialogue">💬 방향키로 세련된 벡터 빌딩들을 탐험하고 입구 포탈[▲ / W]로 입장해보세요.</div>
@@ -292,7 +292,8 @@ window.addEventListener('load', () => {
     canvas.focus();
 });
 
-let cash = 1000000;
+// 초기 현금 500만 원으로 상향
+let cash = 5000000;
 let turn = 1;
 let isDay = true;
 let currentScene = 'town';
@@ -357,7 +358,7 @@ let portalAnim = 0;
 let keys = {};
 let lastProximityKey = null;
 
-// 코인 0.1초 단위 상하 폭등/폭락 미니게임 상태 변수
+// 코인 초고속 변동 미니게임 상태 변수
 let isCryptoGameActive = false;
 let cryptoMultiplier = 1.0;
 let cryptoGameInterval = null;
@@ -399,7 +400,7 @@ function getTotalAssets() {
 }
 
 function restartGame() {
-    cash = 1000000;
+    cash = 5000000; // 리스타트 시에도 500만 원으로 초기화
     turn = 1;
     isDay = true;
     currentScene = 'town';
@@ -553,7 +554,7 @@ function renderDialogueOptions(type) {
     } else if (type === 'crypto') {
         if (!isCryptoGameActive) {
             actionArea.innerHTML = `
-                <button class="action-btn" style="background: linear-gradient(135deg, #f43f5e, #e11d48); padding: 8px 20px; font-size: 14px;" onclick="startCryptoMinigame()">🚀 사이버 코인 급등락 미니게임 시작 (스페이스바로 매도!)</button>
+                <button class="action-btn" style="background: linear-gradient(135deg, #f43f5e, #e11d48); padding: 8px 20px; font-size: 14px;" onclick="startCryptoMinigame()">🚀 초고속 사이버 코인 미니게임 시작 (스페이스바로 매도!)</button>
                 <div style="margin-top: 6px;"><button class="exit-btn" onclick="exitBuilding()">🚪 나가기</button></div>
             `;
         }
@@ -567,7 +568,7 @@ function renderDialogueOptions(type) {
     }
 }
 
-// 0.1초 단위 상하 폭등/폭락 코인 타이밍 미니게임 시작 함수
+// 0.05초 단위 초고속 급등락 코인 타이밍 미니게임 시작 함수 (변동 속도 더 빠르게 상향)
 function startCryptoMinigame() {
     if (isGameOver) return;
     isCryptoGameActive = true;
@@ -576,27 +577,27 @@ function startCryptoMinigame() {
     const dialogue = document.getElementById('dialogue');
     const actionArea = document.getElementById('actionArea');
    
-    dialogue.innerHTML = "🚀 <b>사이버 코인 실시간 급등락 중!</b> 순식간에 마이너스로 꽂힐 수 있으니 눈치껏 <b>[스페이스바]</b>를 누르세요!";
+    dialogue.innerHTML = "🚀 <b>초고속 사이버 코인 실시간 폭등락 중!</b> 눈 깜짝할 사이에 곤두박질칠 수 있으니 신중하게 <b>[스페이스바]</b>를 누르세요!";
     actionArea.innerHTML = `
         <div style="font-size: 18px; font-weight: 700; color: #f43f5e; margin-bottom: 6px;">현재 배율: <span id="multiplierDisplay">1.00</span>x</div>
         <button class="action-btn" style="background: linear-gradient(135deg, #f43f5e, #e11d48); padding: 10px 24px; font-size: 15px;" onclick="stopCryptoMinigame()">🛑 지금 매도 (수익/손실 확정 & 턴 진행)</button>
     `;
 
     if (cryptoGameInterval) clearInterval(cryptoGameInterval);
-    // 0.1초(100ms)마다 대폭 폭등(+45%)과 대폭 폭락(-45%)이 널뛰기하도록 설정
+    // 0.05초(50ms) 간격으로 변동 속도 대폭 상향 및 상하 널뛰기 극대화 (-50% ~ +55%)
     cryptoGameInterval = setInterval(() => {
-        let delta = (Math.random() * 0.9 - 0.45);
-        cryptoMultiplier = Math.max(0.05, cryptoMultiplier + delta);
+        let delta = (Math.random() * 1.05 - 0.50);
+        cryptoMultiplier = Math.max(0.02, cryptoMultiplier + delta);
        
         let span = document.getElementById('multiplierDisplay');
         if (span) {
             span.innerText = cryptoMultiplier.toFixed(2);
             span.style.color = cryptoMultiplier >= 1.0 ? '#10b981' : '#f43f5e';
         }
-    }, 100);
+    }, 50);
 }
 
-// 코인 타이밍 미니게임 종료 및 정산 함수 (자산 증가 및 감소 모두 반영)
+// 코인 타이밍 미니게임 종료 및 정산 함수
 function stopCryptoMinigame() {
     if (!isCryptoGameActive) return;
     isCryptoGameActive = false;
