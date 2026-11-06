@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="메이플 비치 자산관리 RPG", page_icon="🍁", layout="wide")
 
 st.title("🏙️ 모던 벡터 시티 & 투자 RPG")
-st.caption("방향키(A, D)로 이동, Space키로 점프! 부동산(오피스텔 등)의 가격과 월세 밸런스가 매력적으로 상향 조정되었습니다.")
+st.caption("방향키(A, D)로 이동, Space키로 점프! 1억 원 달성 시 황금빛 'YOU WIN!' 엔딩이 화려하게 출력됩니다.")
 
 game_html = """
 <!DOCTYPE html>
@@ -255,7 +255,7 @@ game_html = """
 
 <div id="newsTickerBox">
     <span id="newsTag">실시간 속보</span>
-    <span id="newsText">모던 벡터 시티 금융 시장이 개장했습니다. 초기자금 1,000만 원으로 투자를 시작하세요!</span>
+    <span id="newsText">모던 벡터 시티 금융 시장이 개장했습니다. 초기자금 1,000만 원으로 1억 달성 도전을 시작하세요!</span>
 </div>
 
 <div id="gameContainer">
@@ -558,7 +558,6 @@ function renderDialogueOptions(type) {
             `;
         }
     } else if (type === 'realty') {
-        // 오피스텔 가격 2,000만 원 / 월세 500만 원으로 상향 적용
         actionArea.innerHTML = `
             <button class="action-btn" onclick="buyBuilding('초역세권 오피스텔', 20000000, 5000000)">🏠 오피스텔 (2천만 / 월세 500만)</button>
             <button class="action-btn" onclick="buyBuilding('테헤란로 빌딩', 45000000, 12000000)">🏢 빌딩 (4천5백만 / 월세 1200만)</button>
@@ -851,6 +850,7 @@ function buyBuilding(name, price, rent) {
     ownedBuildings.push({ name, rent });
     canvas.focus();
    
+    // 자산 총합이 1억 이상이 되면 즉시 거대한 YOU WIN 엔딩 트리거!
     if (getTotalAssets() >= goalMoney) {
         updateUI();
         triggerGameOver('win');
@@ -920,22 +920,22 @@ function draw() {
 
     if (isGameOver) {
         ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.textAlign = 'center';
-        ctx.shadowColor = '#000';
-        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#fbbf24';
+        ctx.shadowBlur = 30;
 
         let finalAssets = getTotalAssets();
         if (gameResult === 'win') {
             ctx.fillStyle = '#fbbf24';
-            ctx.font = '700 48px Pretendard, sans-serif';
-            ctx.fillText('YOU WIN!', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.font = '700 64px Pretendard, sans-serif';
+            ctx.fillText('YOU WIN!', canvas.width / 2, canvas.height / 2 - 30);
 
             ctx.fillStyle = '#ffffff';
             ctx.font = '600 18px Pretendard, sans-serif';
-            ctx.fillText('축하합니다! 1억 원을 달성하여 강남 건물주가 되었습니다!', canvas.width / 2, canvas.height / 2 + 30);
+            ctx.fillText('🏆 1억 원을 달성하고 건물주가 되었습니다! 완벽한 승리입니다!', canvas.width / 2, canvas.height / 2 + 25);
         } else {
             ctx.fillStyle = '#f43f5e';
             ctx.font = '700 48px Pretendard, sans-serif';
